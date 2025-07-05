@@ -7,13 +7,10 @@ import {
   Button,
   Card,
   CardContent,
-  AppBar,
-  Toolbar,
-  IconButton,
   Grid,
   TextField
 } from '@mui/material';
-import { ArrowBack as ArrowBackIcon, Home as HomeIcon, Add as AddIcon, Remove as RemoveIcon } from '@mui/icons-material';
+import { Add as AddIcon, Remove as RemoveIcon } from '@mui/icons-material';
 
 const BACKEND_URL = 'http://localhost:4000';
 
@@ -53,7 +50,6 @@ const ProductPage = () => {
       });
       const result = await res.json();
       if (result.success) {
-        // alert('Order placed!');
         setName('');
         setAddress('');
         setQuantity(1);
@@ -68,35 +64,24 @@ const ProductPage = () => {
 
   if (!product) {
     return (
-      <Container maxWidth="sm" sx={{ mt: 8 }}>
-        <Typography variant="h5" align="center">Product not found</Typography>
-        <Box sx={{ textAlign: 'center', mt: 2 }}>
-          <Button variant="outlined" onClick={() => navigate('/')}>Back to Home</Button>
-        </Box>
-      </Container>
+      <Box sx={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%)', pt: 8, pb: 8 }}>
+        <Container maxWidth="sm" sx={{ mt: 8 }}>
+          <Typography variant="h5" align="center">Product not found</Typography>
+          <Box sx={{ textAlign: 'center', mt: 2 }}>
+            <Button variant="outlined" onClick={() => navigate('/')}>Back to Home</Button>
+          </Box>
+        </Container>
+      </Box>
     );
   }
 
   return (
-    <>
-      <AppBar position="static">
-        <Toolbar>
-          <IconButton edge="start" color="inherit" onClick={() => navigate('/')} sx={{ mr: 2 }}>
-            <HomeIcon />
-          </IconButton>
-          <IconButton color="inherit" onClick={() => navigate(-1)} sx={{ mr: 2 }}>
-            <ArrowBackIcon />
-          </IconButton>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            Product Details
-          </Typography>
-        </Toolbar>
-      </AppBar>
-      <Container maxWidth="md" sx={{ mt: 8, mb: 8 }}>
-        <Card sx={{ width: '100%', minHeight: 500, display: 'flex', flexDirection: 'column', alignItems: 'center', p: 2 }}>
-          <Grid container spacing={4} alignItems="flex-start" justifyContent="center">
+    <Box sx={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%)', pt: 8, pb: 8 }}>
+      <Container maxWidth="md">
+        <Card sx={{ width: '100%', minHeight: 400, display: 'flex', flexDirection: 'column', alignItems: 'center', p: 2, boxShadow: '0 8px 40px 0 #7C4DFF22' }}>
+          <Grid container spacing={4} alignItems="stretch" justifyContent="center">
             <Grid item xs={12} md={6}>
-              <Box sx={{ width: '100%', height: 320, overflow: 'hidden', mb: 3 }}>
+              <Box sx={{ width: '100%', height: 320, overflow: 'hidden', borderRadius: 3, boxShadow: '0 4px 32px 0 #7C4DFF22', background: '#181A20' }}>
                 <img
                   src={product.image}
                   alt={product.title}
@@ -104,11 +89,11 @@ const ProductPage = () => {
                 />
               </Box>
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid item xs={12} md={6} sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
               <CardContent sx={{ width: '100%' }}>
-                <Typography variant="h4" gutterBottom>{product.title}</Typography>
+                <Typography variant="h4" gutterBottom sx={{ fontWeight: 700, color: '#fff' }}>{product.title}</Typography>
                 <Typography variant="body1" color="text.secondary" sx={{ mb: 3, textAlign: 'left' }}>{product.description}</Typography>
-                <Typography variant="h5" color="primary" sx={{ mb: 3 }}>₽{product.price}</Typography>
+                <Typography variant="h5" sx={{ mb: 3, color: '#7C4DFF', fontWeight: 700, textShadow: '0 0 8px #7C4DFF55' }}>₽{product.price}</Typography>
                 <Box sx={{ mb: 2 }}>
                   <TextField
                     label="Your name"
@@ -148,6 +133,7 @@ const ProductPage = () => {
                     color="primary"
                     size="large"
                     fullWidth
+                    sx={{ fontWeight: 700, fontSize: 20, py: 2, mt: 2, background: 'linear-gradient(90deg, #7C4DFF 0%, #00E5FF 100%)', boxShadow: '0 4px 24px 0 #7C4DFF33' }}
                     onClick={handleBuy}
                   >
                     Buy
@@ -158,7 +144,7 @@ const ProductPage = () => {
           </Grid>
         </Card>
       </Container>
-    </>
+    </Box>
   );
 };
 

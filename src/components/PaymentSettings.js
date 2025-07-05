@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Typography, Card, CardContent, TextField, Button, FormControl, InputLabel, Select, MenuItem, Box } from '@mui/material';
 import { Save as SaveIcon, Wallet as WalletIcon, NetworkCheck as NetworkIcon } from '@mui/icons-material';
-import { NETWORK_CONFIGS } from '../config/rpc';
-import { getPaymentSettings, savePaymentSettings, isValidWalletAddress } from '../utils/paymentSettings';
 
 const PaymentSettings = () => {
   const [settings, setSettings] = useState({
@@ -13,14 +11,16 @@ const PaymentSettings = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
 
+  // Получаем адрес продавца с backend
   useEffect(() => {
-    const saved = getPaymentSettings();
-    if (saved) {
-      setSettings(saved);
-    }
+    fetch('/api/seller')
+      .then(res => res.json())
+      .then(data => {
+        setSettings(prev => ({ ...prev, walletAddress: data.walletAddress || '' }));
+      });
   }, []);
 
-  const isValidAddress = isValidWalletAddress;
+  const isValidAddress = (address) => /^0x[a-fA-F0-9]{40}$/.test(address);
 
   const handleChange = (field, value) => {
     setSettings(prev => ({ ...prev, [field]: value }));
@@ -38,14 +38,19 @@ const PaymentSettings = () => {
     setIsLoading(true);
     setMessage({ type: '', text: '' });
     try {
-      const success = savePaymentSettings(settings);
-      if (success) {
-        setMessage({ type: 'success', text: 'Настройки платежей успешно сохранены!' });
+      const res = await fetch('/api/seller', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ walletAddress: settings.walletAddress })
+      });
+      const result = await res.json();
+      if (result.success) {
+        setMessage({ type: 'success', text: 'Адрес продавца успешно сохранён!' });
       } else {
-        setMessage({ type: 'error', text: 'Ошибка при сохранении настроек' });
+        setMessage({ type: 'error', text: result.error || 'Ошибка при сохранении' });
       }
     } catch (error) {
-      setMessage({ type: 'error', text: 'Ошибка при сохранении настроек' });
+      setMessage({ type: 'error', text: 'Ошибка при сохранении' });
     } finally {
       setIsLoading(false);
     }

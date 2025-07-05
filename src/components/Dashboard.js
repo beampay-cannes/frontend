@@ -12,15 +12,12 @@ import {
   Add as AddIcon,
   Payment as PaymentIcon,
   ShoppingCart as ShoppingCartIcon,
-  Settings as SettingsIcon,
-  Warning as WarningIcon
+  Settings as SettingsIcon
 } from '@mui/icons-material';
 import { getPaymentSettings, getNetworkInfo } from '../utils/paymentSettings';
-import { useTheme } from '@mui/material/styles';
 
 const Dashboard = ({ ThemeToggleButton }) => {
   const navigate = useNavigate();
-  const theme = useTheme();
   const [stats, setStats] = useState({
     totalProducts: 0,
     totalOrders: 0,

@@ -179,6 +179,38 @@ app.post('/eip7702/transaction', async (req, res) => {
   }
 });
 
+// Эндпоинты для seller.json
+const sellerPath = path.join(__dirname, '../public/seller.json');
+
+app.get('/api/seller', (req, res) => {
+  fs.readFile(sellerPath, 'utf8', (err, data) => {
+    if (err) {
+      // Если файла нет, создаём с пустым адресом
+      const defaultSeller = { walletAddress: '' };
+      fs.writeFileSync(sellerPath, JSON.stringify(defaultSeller, null, 2));
+      return res.json(defaultSeller);
+    }
+    try {
+      const seller = JSON.parse(data);
+      res.json(seller);
+    } catch (e) {
+      res.status(500).json({ error: 'Failed to parse seller.json' });
+    }
+  });
+});
+
+app.post('/api/seller', (req, res) => {
+  const { walletAddress } = req.body;
+  if (!walletAddress) {
+    return res.status(400).json({ error: 'walletAddress is required' });
+  }
+  const seller = { walletAddress };
+  fs.writeFile(sellerPath, JSON.stringify(seller, null, 2), (err) => {
+    if (err) return res.status(500).json({ error: 'Failed to write seller.json' });
+    res.json({ success: true, seller });
+  });
+});
+
 app.listen(PORT, () => {
   console.log(`Backend server running on http://localhost:${PORT}`);
   // Запускаем синхронизацию заказов раз в 5 секунд
