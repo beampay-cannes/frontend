@@ -5,13 +5,13 @@ import {
   Typography,
   Box,
   Button,
-  AppBar,
-  Toolbar,
-  IconButton,
-  Paper
+  Card,
+  CardContent,
+  Grid,
+  Chip
 } from '@mui/material';
-import { ArrowBack as ArrowBackIcon, Home as HomeIcon } from '@mui/icons-material';
-import { QRCodeCanvas } from 'qrcode.react';
+import { ethers } from 'ethers';
+
 import { 
   getNetworkConfig, 
   NETWORK_CONFIGS 
@@ -44,6 +44,33 @@ const getCCTPDomain = (network) => {
   };
   return domains[network] || 0; // По умолчанию Ethereum
 };
+
+function strip0x(str) {
+  return typeof str === 'string' && str.startsWith('0x') ? str.slice(2) : str;
+}
+
+const TOKEN_MESSENGER_V2_ABI = [
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "amount", "type": "uint256" },
+      { "internalType": "uint32", "name": "destinationDomain", "type": "uint32" },
+      { "internalType": "bytes32", "name": "mintRecipient", "type": "bytes32" },
+      { "internalType": "address", "name": "burnToken", "type": "address" },
+      { "internalType": "bytes32", "name": "destinationCaller", "type": "bytes32" },
+      { "internalType": "uint256", "name": "maxFee", "type": "uint256" },
+      { "internalType": "uint32", "name": "minFinalityThreshold", "type": "uint32" }
+    ],
+    "name": "depositForBurn",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
+];
+
+const USDC_ABI = [
+  "function approve(address spender, uint256 amount) external returns (bool)",
+  "function allowance(address owner, address spender) external view returns (uint256)"
+];
 
 const OrderPayPage = () => {
   const { orderId } = useParams();
@@ -92,68 +119,10 @@ const OrderPayPage = () => {
     }
   }, []);
 
-  const payUrl = `${window.location.origin}/order/${orderId}/pay/mobile`;
-
-  const handleMetaMaskPay = async () => {
+  const handleEthersDepositForBurn = async () => {
     setSignResult(null);
     setSignError(null);
-    if (!window.ethereum) {
-      setSignError('MetaMask is not installed');
-      return;
-    }
 
-    // Проверяем, поддерживается ли текущая сеть
-    if (!currentNetwork || currentNetwork === 'unknown') {
-      setSignError('Please switch to a supported network (Base, Ethereum, or World Chain) in MetaMask');
-      return;
-    }
-
-    const networkConfig = getNetworkConfig(currentNetwork);
-
-    try {
-      setSignResult('Creating EIP-7702 smart account and signing...');
-      
-      // Создаем EIP-7702 транзакцию локально
-      const eip7702Result = await createEIP7702Transaction(currentNetwork, order.id);
-      
-      if (!eip7702Result.success) {
-        setSignError(`EIP-7702 Error: ${eip7702Result.error}`);
-        return;
-      }
-
-      setSignResult('Sending signed data to backend...');
-      
-      // Отправляем подписанные данные на backend
-      const response = await fetch('http://localhost:4000/eip7702/transaction', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          network: currentNetwork,
-          orderId: order.id,
-          signedData: {
-            authorization: eip7702Result.authorization,
-            userOperation: eip7702Result.userOperation
-          }
-        })
-      });
-
-      const result = await response.json();
-      
-      if (result.success) {
-        setSignResult(`EIP-7702 User Operation sent on ${networkConfig.chainName}! Hash: ${result.userOperationHash}`);
-      } else {
-        setSignError(`Backend Error: ${result.error}`);
-      }
-    } catch (err) {
-      setSignError(err.message || 'Failed to send EIP-7702 transaction');
-    }
-  };
-
-  const handleMetaMaskBatchPay = async () => {
-    setSignResult(null);
-    setSignError(null);
     if (!window.ethereum) {
       setSignError('MetaMask is not installed');
       return;
@@ -166,163 +135,56 @@ const OrderPayPage = () => {
       setSignError('Order not loaded');
       return;
     }
+
     try {
-      const chainId = parseInt(NETWORK_CONFIGS[currentNetwork].chainId, 16);
-      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-      const account = { address: accounts[0] };
-      // PAYMENT_ID: order.id as hex, 32 bytes
-      const PAYMENT_ID = '0x' + window.BigInt(order.id).toString(16).padStart(64, '0');
-      // DECLARED_AMOUNT: order.amount (USDC, 6 decimals)
-      const amount = parseFloat(order.amount) || 0;
-      if (isNaN(amount)) {
-        setSignError('Invalid order amount');
-        return;
-      }
-      const DECLARED_AMOUNT = window.BigInt(Math.round(amount * 1e6));
-      
-      // USDC approval calldata (approve CCTP V2 contract to spend USDC)
-      const approveCallData = '0x095ea7b3' + // approve function selector
-        '000000000000000000000000' + CCTP_V2_ADDRESS.slice(2) + // spender (CCTP V2)
-        DECLARED_AMOUNT.toString(16).padStart(64, '0'); // amount
-      
-      // CCTP V2 depositForBurn calldata
-      // function depositForBurn(uint256 amount, uint32 destinationDomain, bytes32 mintRecipient, address burnToken, bytes32 destinationCaller, uint256 maxFee, uint32 minFinalityThreshold)
-      const cctpDomain = getCCTPDomain(currentNetwork);
-      const destinationDomain = '0x' + cctpDomain.toString(16).padStart(8, '0'); // Правильный домен для текущей сети
-      const mintRecipient = '0x000000000000000000000000' + account.address.slice(2); // recipient address as bytes32
-      const burnToken = '000000000000000000000000' + USDC_ADDRESS.slice(2); // USDC token address
-      const destinationCaller = '0x0000000000000000000000000000000000000000000000000000000000000000'; // zero address as bytes32
-      const maxFee = '0x0000000000000000000000000000000000000000000000000000000000000000'; // 0 max fee
-      const minFinalityThreshold = '0x00000001'; // 1 block finality
-      
-      const depositForBurnCallData = '0x2c2cb6c3' + // depositForBurn function selector
-        DECLARED_AMOUNT.toString(16).padStart(64, '0') + // amount
-        destinationDomain + // destinationDomain
-        mintRecipient + // mintRecipient
-        burnToken + // burnToken
-        destinationCaller + // destinationCaller
-        maxFee + // maxFee
-        minFinalityThreshold; // minFinalityThreshold
-      
-      // commit calldata
-      const commitCallData = commitSelector +
-        '000000000000000000000000' + TO_ADDRESS.slice(2) +
-        DECLARED_AMOUNT.toString(16).padStart(64, '0') +
-        PAYMENT_ID.slice(2);
-      // reveal calldata
-      const revealCallData = revealSelector +
-        '000000000000000000000000' + TO_ADDRESS.slice(2) +
-        DECLARED_AMOUNT.toString(16).padStart(64, '0') +
-        PAYMENT_ID.slice(2);
-      const contractAddress = getContractAddress(currentNetwork);
-      setSignResult('Sending USDC approval and CCTP V2 depositForBurn transaction...');
-      const res = await window.ethereum.request({
-        method: 'wallet_sendCalls',
-        params: [{
-          version: '2.0.0',
-          chainId: '0x' + chainId.toString(16),
-          from: account.address,
-          atomicRequired: true,
-          calls: [
-            {
-              to: USDC_ADDRESS,
-              data: approveCallData,
-              value: '0x0',
-            },
-            {
-              to: CCTP_V2_ADDRESS,
-              data: depositForBurnCallData,
-              value: '0x0',
-            },
-            {
-              to: contractAddress,
-              data: commitCallData,
-              value: '0x0',
-            },
-            {
-              to: contractAddress,
-              data: revealCallData,
-              value: '0x0',
-            }
-          ],
-        }]
-      });
-      console.log('EIP-7702 Batch Call Response:', res);
-      setSignResult('SendCalls Response: ' + JSON.stringify(res));
-      
-      // Start polling for transaction status
       setIsTransactionPending(true);
-      
-      const pollForStatus = async () => {
-        try {
-          const status = await window.ethereum?.request({
-            method: 'wallet_getCallsStatus',
-            params: [res.id]
-          });
 
-          console.log("Calls Status:", status);
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
 
-          if (status.status === 'CONFIRMED' || status.status === 200 || status.status === 100) {
-            const txnHash = status.receipts?.[0]?.transactionHash;
-            console.log('Transaction confirmed! Hash:', txnHash);
+      const tokenMessengerV2 = new ethers.Contract(
+        CCTP_V2_ADDRESS,
+        TOKEN_MESSENGER_V2_ABI,
+        signer
+      );
 
-            // Check if EOA now has code (indicating EIP-7702 delegation worked)
-            try {
-              const eoaCode = await window.ethereum?.request({
-                method: 'eth_getCode',
-                params: [account.address, 'latest']
-              });
-              console.log('EOA code after transaction:', eoaCode);
-              const isSmartEoa = eoaCode !== "0x";
-              console.log('Is Smart EOA:', isSmartEoa);
+      const usdc = new ethers.Contract(USDC_ADDRESS, USDC_ABI, signer);
+      const amount = ethers.parseUnits(order.amount.toString(), 6);
+      const destinationDomain = getCCTPDomain(currentNetwork);
+      const mintRecipient = ethers.zeroPadValue(order.wallet, 32);
+      const burnToken = USDC_ADDRESS;
+      const destinationCaller = ethers.zeroPadValue('0x0', 32);
+      const maxFee = ethers.parseUnits('0.1', 6); // 0.1 USDC
+      const minFinalityThreshold = 100; // для Instant
 
-              alert(`Transaction confirmed! Hash: ${txnHash}\nEOA is now smart: ${isSmartEoa}`);
-            } catch (codeError) {
-              console.error('Error checking EOA code:', codeError);
-              alert(`Transaction confirmed! Hash: ${txnHash}`);
-            }
+      const userAddress = await signer.getAddress();
+      const allowance = await usdc.allowance(userAddress, CCTP_V2_ADDRESS);
+      if (allowance < amount) {
+        setSignResult('Approving USDC for CCTP...');
+        const approveTx = await usdc.approve(CCTP_V2_ADDRESS, amount);
+        await approveTx.wait();
+        setSignResult(`USDC approved: ${approveTx.hash}`);
+      } else {
+        setSignResult('USDC already approved');
+      }
 
-            setIsTransactionPending(false);
-            return true;
-          } else if (status.status === 'PENDING' || status.status === 'pending') {
-            console.log('Transaction still pending...');
-            return false;
-          } else {
-            console.error('Transaction failed with status:', status.status);
-            alert('Transaction failed with status: ' + status.status);
-            setIsTransactionPending(false);
-            return true;
-          }
-        } catch (error) {
-          console.error('Error polling status:', error);
-          return false;
-        }
-      };
+      setSignResult('Sending depositForBurn transaction...');
+      const tx = await tokenMessengerV2.depositForBurn(
+        amount,
+        destinationDomain,
+        mintRecipient,
+        burnToken,
+        destinationCaller,
+        maxFee,
+        minFinalityThreshold
+      );
 
-      // Poll every 2 seconds for up to 2 minutes
-      let attempts = 0;
-      const maxAttempts = 60;
-      const interval = setInterval(async () => {
-        attempts++;
-        const completed = await pollForStatus();
-
-        if (completed || attempts >= maxAttempts) {
-          clearInterval(interval);
-          if (attempts >= maxAttempts) {
-            console.log('Polling timed out');
-            alert('Transaction status polling timed out');
-            setIsTransactionPending(false);
-          }
-        }
-      }, 2000);
-
-    } catch (error) {
-      console.error('=== WALLET_SENDCALLS ERROR ===');
-      console.error('Error:', error);
-      console.error('Message:', error?.message);
-      console.error('Code:', error?.code);
-
-      alert('wallet_sendCalls failed: ' + (error?.message || 'Unknown error'));
+      setSignResult(`Tx sent: ${tx.hash}`);
+      await tx.wait();
+      setSignResult(`Tx confirmed: ${tx.hash}`);
+    } catch (err) {
+      setSignError(err.message || 'Failed to send depositForBurn transaction');
+    } finally {
       setIsTransactionPending(false);
     }
   };
@@ -469,99 +331,128 @@ const OrderPayPage = () => {
 
   if (!order) {
     return (
-      <Container maxWidth="sm" sx={{ mt: 8 }}>
-        <Typography variant="h5" align="center">Order not found</Typography>
-        <Box sx={{ textAlign: 'center', mt: 2 }}>
-          <Button variant="outlined" onClick={() => navigate('/')}>Back to Home</Button>
-        </Box>
-      </Container>
+      <Box sx={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%)', pt: 8, pb: 8 }}>
+        <Container maxWidth="sm" sx={{ mt: 8 }}>
+          <Typography variant="h5" align="center" sx={{ color: '#fff' }}>Order not found</Typography>
+          <Box sx={{ textAlign: 'center', mt: 2 }}>
+            <Button variant="outlined" onClick={() => navigate('/')} sx={{ color: '#fff', borderColor: '#7C4DFF' }}>Back to Home</Button>
+          </Box>
+        </Container>
+      </Box>
     );
   }
 
   return (
-    <>
-      <AppBar position="static">
-        <Toolbar>
-          <IconButton edge="start" color="inherit" onClick={() => navigate('/')} sx={{ mr: 2 }}>
-            <HomeIcon />
-          </IconButton>
-          <IconButton color="inherit" onClick={() => navigate(-1)} sx={{ mr: 2 }}>
-            <ArrowBackIcon />
-          </IconButton>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            Pay for Order
-          </Typography>
-        </Toolbar>
-      </AppBar>
-      <Container maxWidth="sm" sx={{ mt: 8, mb: 8 }}>
-        <Paper sx={{ p: 4, textAlign: 'center' }}>
-          <Typography variant="h5" gutterBottom>Scan QR to Pay</Typography>
-          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
-            <QRCodeCanvas value={payUrl} size={200} />
-          </Box>
-          <Typography variant="body1" sx={{ mb: 2 }}>
-            Or pay from browser:
+    <Box sx={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%)', pt: 8, pb: 8 }}>
+      <Container maxWidth="md">
+        <Card sx={{ width: '100%', p: 4, boxShadow: '0 8px 40px 0 #7C4DFF22' }}>
+          <Typography variant="h4" gutterBottom sx={{ textAlign: 'center', fontWeight: 700, color: '#fff', mb: 4 }}>
+            Pay for Order #{order.id}
           </Typography>
           
-          {currentNetwork && currentNetwork !== 'unknown' && (
-            <Typography variant="body2" color="primary" sx={{ mb: 2 }}>
-              Current network: {NETWORK_CONFIGS[currentNetwork].chainName}
-            </Typography>
-          )}
-          
-          {currentNetwork === 'unknown' && (
-            <Typography variant="body2" color="warning.main" sx={{ mb: 2 }}>
-              Please switch to Base, Ethereum, or World Chain network in MetaMask
-            </Typography>
-          )}
+          <Box sx={{ textAlign: 'center' }}>
+            <Box sx={{ mb: 4, p: 3, bgcolor: 'rgba(124, 77, 255, 0.1)', borderRadius: 3, border: '1px solid rgba(124, 77, 255, 0.3)' }}>
+              <Typography variant="h6" sx={{ color: '#fff', mb: 2 }}>Order ID</Typography>
+              <Typography variant="h4" sx={{ color: '#7C4DFF', fontWeight: 700, fontFamily: 'monospace', mb: 3 }}>
+                {order.id}
+              </Typography>
+              
+              <Box sx={{ mt: 3, pt: 3, borderTop: '1px solid rgba(124, 77, 255, 0.3)' }}>
+                <Typography variant="h6" sx={{ color: '#fff', mb: 2 }}>Order Details</Typography>
+                
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <Box>
+                    <Typography variant="body2" sx={{ color: 'text.secondary', mb: 0.5 }}>Product</Typography>
+                    <Typography variant="body1" sx={{ color: '#fff', fontWeight: 600 }}>
+                      {order.productTitle}
+                    </Typography>
+                  </Box>
+                  
+                  <Box>
+                    <Typography variant="body2" sx={{ color: 'text.secondary', mb: 0.5 }}>Customer</Typography>
+                    <Typography variant="body1" sx={{ color: '#fff', fontWeight: 600 }}>
+                      {order.name}
+                    </Typography>
+                  </Box>
+                  
+                  <Box>
+                    <Typography variant="body2" sx={{ color: 'text.secondary', mb: 0.5 }}>Delivery Address</Typography>
+                    <Typography variant="body1" sx={{ color: '#fff', fontWeight: 600 }}>
+                      {order.address}
+                    </Typography>
+                  </Box>
+                  
+                  {order.quantity && (
+                    <Box>
+                      <Typography variant="body2" sx={{ color: 'text.secondary', mb: 0.5 }}>Quantity</Typography>
+                      <Typography variant="body1" sx={{ color: '#fff', fontWeight: 600 }}>
+                        {order.quantity}
+                      </Typography>
+                    </Box>
+                  )}
+                </Box>
+              </Box>
+            </Box>
+            
+            <Box sx={{ textAlign: 'center' }}>
+                {currentNetwork && currentNetwork !== 'unknown' && (
+                  <Box sx={{ mb: 3 }}>
+                    <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>Current network:</Typography>
+                    <Chip 
+                      label={NETWORK_CONFIGS[currentNetwork].chainName}
+                      sx={{ 
+                        background: 'linear-gradient(90deg, #7C4DFF 0%, #00E5FF 100%)',
+                        color: '#fff',
+                        fontWeight: 700
+                      }}
+                    />
+                  </Box>
+                )}
+                
+                {currentNetwork === 'unknown' && (
+                  <Typography variant="body2" sx={{ color: '#ff9800', mb: 3 }}>
+                    Please switch to Base, Ethereum, or World Chain network in MetaMask
+                  </Typography>
+                )}
 
-          <Button
-            variant="contained"
-            color="primary"
-            size="large"
-            onClick={handleMetaMaskPay}
-            disabled={!currentNetwork || currentNetwork === 'unknown'}
-            sx={{ mb: 2 }}
-          >
-            Pay with MetaMask
-          </Button>
-          
-          <Button
-            variant="contained"
-            color="secondary"
-            size="large"
-            onClick={handleMetaMaskBatchPay}
-            disabled={!currentNetwork || currentNetwork === 'unknown' || isTransactionPending}
-            sx={{ mb: 2 }}
-          >
-            {isTransactionPending ? 'Transaction Pending...' : 'Pay with MetaMask (USDC + CCTP V2)'}
-          </Button>
-          
-          <Button
-            variant="contained"
-            color="success"
-            size="large"
-            onClick={handleAmbireWalletPay}
-            disabled={!currentNetwork || currentNetwork === 'unknown' || isAmbireTransactionPending}
-            sx={{ mb: 2 }}
-          >
-            {isAmbireTransactionPending ? 'Ambire Transaction Pending...' : 'Pay with Ambire Wallet'}
-          </Button>
-          
-          {signResult && (
-            <Box sx={{ mt: 2, wordBreak: 'break-all' }}>
-              <Typography variant="body2" color="success.main">Transaction:</Typography>
-              <Typography variant="body2">{signResult}</Typography>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <Button
+                    variant="contained"
+                    size="large"
+                    onClick={handleEthersDepositForBurn}
+                    disabled={!currentNetwork || currentNetwork === 'unknown' || isTransactionPending}
+                    sx={{ 
+                      fontWeight: 700, 
+                      fontSize: 16, 
+                      py: 1.5,
+                      background: 'linear-gradient(90deg, #00E5FF 0%, #7C4DFF 100%)',
+                      boxShadow: '0 4px 24px 0 #00E5FF33',
+                      '&:hover': {
+                        background: 'linear-gradient(90deg, #00c4e6 0%, #6a3de8 100%)'
+                      }
+                    }}
+                  >
+                    {isTransactionPending ? 'Transaction Pending...' : 'Pay with MetaMask (USDC + CCTP V2)'}
+                  </Button>
+                </Box>
+                
+                {signResult && (
+                  <Box sx={{ mt: 3, p: 2, bgcolor: 'rgba(76, 175, 80, 0.1)', borderRadius: 3, border: '1px solid rgba(76, 175, 80, 0.3)' }}>
+                    <Typography variant="body2" sx={{ color: '#4CAF50', fontWeight: 700, mb: 1 }}>Transaction:</Typography>
+                    <Typography variant="body2" sx={{ color: '#fff', wordBreak: 'break-all' }}>{signResult}</Typography>
+                  </Box>
+                )}
+                
+                {signError && (
+                  <Box sx={{ mt: 3, p: 2, bgcolor: 'rgba(244, 67, 54, 0.1)', borderRadius: 3, border: '1px solid rgba(244, 67, 54, 0.3)' }}>
+                    <Typography variant="body2" sx={{ color: '#f44336' }}>{signError}</Typography>
+                  </Box>
+                )}
+              </Box>
             </Box>
-          )}
-          {signError && (
-            <Box sx={{ mt: 2 }}>
-              <Typography variant="body2" color="error">{signError}</Typography>
-            </Box>
-          )}
-        </Paper>
+        </Card>
       </Container>
-    </>
+    </Box>
   );
 };
 
