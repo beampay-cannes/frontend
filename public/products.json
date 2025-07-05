@@ -1,0 +1,23 @@
+[
+  {
+    "id": 1,
+    "title": "Chair",
+    "description": "Blue chair",
+    "price": 50,
+    "image": "https://images.unsplash.com/photo-1519125323398-675f0ddb6308"
+  },
+  {
+    "id": 2,
+    "title": "Table",
+    "description": "Wooden table",
+    "price": 120,
+    "image": "https://images.unsplash.com/photo-1519710164239-da123dc03ef4"
+  },
+  {
+    "title": "Sofa",
+    "description": "Great sofa",
+    "price": 50,
+    "image": "/uploads/1751635717830_4thaug_2ndhalf5934_green.webp",
+    "id": 1751635721311
+  }
+]
