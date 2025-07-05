@@ -1,0 +1,10 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.28;
+
+contract SimpleEventContract {
+    event DataEmitted(bytes32 indexed data);
+    
+    function emitData(bytes32 _data) public {
+        emit DataEmitted(_data);
+    }
+} 
