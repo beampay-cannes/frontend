@@ -1,4 +1,4 @@
-import React, { useMemo, useState, createContext, useContext } from 'react';
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -14,30 +14,23 @@ import MobilePayPage from './components/MobilePayPage';
 import PaymentSettings from './components/PaymentSettings';
 import NavBar from './components/NavBar';
 import './App.css';
-import { IconButton, Box, Tooltip } from '@mui/material';
-import { Brightness4, Brightness7 } from '@mui/icons-material';
 
-// Контекст для темы
-const ColorModeContext = createContext({ toggleColorMode: () => {} });
-
-export const useColorMode = () => useContext(ColorModeContext);
-
-const getDesignTokens = (mode) => ({
+const getDesignTokens = () => ({
   palette: {
-    mode,
-    primary: { main: '#7C4DFF' }, // Violet Beam
-    secondary: { main: '#00E5FF' }, // Laser Cyan
+    mode: 'dark',
+    primary: { main: '#7C4DFF' },
+    secondary: { main: '#00E5FF' },
     background: {
-      default: mode === 'light' ? '#F5F7FA' : '#181A20',
-      paper: mode === 'light' ? '#FFFFFF' : '#23263B',
+      default: '#181A20',
+      paper: '#23263B',
     },
     success: { main: '#00C853' },
     warning: { main: '#FF9100' },
     info: { main: '#2979FF' },
-    divider: mode === 'light' ? '#E3E6F0' : '#23263B',
+    divider: '#23263B',
     text: {
-      primary: mode === 'light' ? '#181A20' : '#F5F7FA',
-      secondary: mode === 'light' ? '#7C4DFF' : '#B39DDB',
+      primary: '#F5F7FA',
+      secondary: '#B39DDB',
     },
   },
   shape: { borderRadius: 3 },
@@ -90,74 +83,30 @@ const getDesignTokens = (mode) => ({
   },
 });
 
-function ThemeToggleButton() {
-  const colorMode = useColorMode();
-  const theme = createTheme(getDesignTokens('light'));
-  const isDark = theme.palette.mode === 'dark';
-  return (
-    <Tooltip title={isDark ? 'Светлая тема' : 'Тёмная тема'}>
-      <IconButton onClick={colorMode.toggleColorMode} color="inherit" sx={{ ml: 1 }}>
-        {isDark ? <Brightness7 /> : <Brightness4 />}
-      </IconButton>
-    </Tooltip>
-  );
-}
-
-function SellersPage() {
-  return (
-    <Box sx={{ mt: 8, textAlign: 'center' }}>
-      <h2 style={{ fontWeight: 900, fontSize: 36, marginBottom: 24 }}>Sellers</h2>
-      <p style={{ fontSize: 20, color: '#7C4DFF' }}>List of all sellers will be here.</p>
-    </Box>
-  );
-}
-
-function CreateSellerPage() {
-  return (
-    <Box sx={{ mt: 8, textAlign: 'center' }}>
-      <h2 style={{ fontWeight: 900, fontSize: 36, marginBottom: 24 }}>Create Seller</h2>
-      <p style={{ fontSize: 20, color: '#7C4DFF' }}>Seller registration form will be here.</p>
-    </Box>
-  );
-}
+const theme = createTheme(getDesignTokens());
 
 function App() {
-  const [mode, setMode] = useState('light');
-  const colorMode = useMemo(
-    () => ({
-      toggleColorMode: () => {
-        setMode((prevMode) => (prevMode === 'light' ? 'dark' : 'light'));
-      },
-    }),
-    [],
-  );
-  const theme = useMemo(() => createTheme(getDesignTokens(mode)), [mode]);
-
   return (
-    <ColorModeContext.Provider value={colorMode}>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <Router>
-          <NavBar ThemeToggleButton={ThemeToggleButton} />
-          <div className="App">
-            <Routes>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/dashboard" element={<Dashboard ThemeToggleButton={ThemeToggleButton} />} />
-              <Route path="/create-product" element={<ProductForm />} />
-              <Route path="/payments" element={<PaymentsPage />} />
-              <Route path="/products" element={<ProductListPage />} />
-              <Route path="/product/:id" element={<ProductPage />} />
-              <Route path="/orders" element={<OrderListPage />} />
-              <Route path="/order/:orderId/pay" element={<OrderPayPage />} />
-              <Route path="/order/:orderId/pay/mobile" element={<MobilePayPage />} />
-              <Route path="/payment-settings" element={<PaymentSettings />} />
-              <Route path="/sellers" element={<SellersPage />} />
-              <Route path="/create-seller" element={<CreateSellerPage />} />
-            </Routes>
-          </div>
-        </Router>
-      </ThemeProvider>
-    </ColorModeContext.Provider>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <Router>
+        <NavBar />
+        <div className="App">
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/create-product" element={<ProductForm />} />
+            <Route path="/payments" element={<PaymentsPage />} />
+            <Route path="/products" element={<ProductListPage />} />
+            <Route path="/product/:id" element={<ProductPage />} />
+            <Route path="/orders" element={<OrderListPage />} />
+            <Route path="/order/:orderId/pay" element={<OrderPayPage />} />
+            <Route path="/order/:orderId/pay/mobile" element={<MobilePayPage />} />
+            <Route path="/payment-settings" element={<PaymentSettings />} />
+          </Routes>
+        </div>
+      </Router>
+    </ThemeProvider>
   );
 }
 

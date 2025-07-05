@@ -16,9 +16,11 @@ import {
   Warning as WarningIcon
 } from '@mui/icons-material';
 import { getPaymentSettings, getNetworkInfo } from '../utils/paymentSettings';
+import { useTheme } from '@mui/material/styles';
 
 const Dashboard = ({ ThemeToggleButton }) => {
   const navigate = useNavigate();
+  const theme = useTheme();
   const [stats, setStats] = useState({
     totalProducts: 0,
     totalOrders: 0,
