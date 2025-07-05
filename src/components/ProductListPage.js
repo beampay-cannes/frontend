@@ -3,7 +3,6 @@ import { useNavigate, Link } from 'react-router-dom';
 import {
   Container,
   Typography,
-  Grid,
   Button,
   Box,
   Paper
@@ -49,7 +48,7 @@ const ProductListPage = () => {
               mb: 2
             }}
           >
-            Все товары
+            All Products
           </Typography>
           <Typography
             variant="h6"
@@ -59,7 +58,7 @@ const ProductListPage = () => {
               letterSpacing: 1
             }}
           >
-            Управляйте своим ассортиментом
+            Manage your product catalog
           </Typography>
         </Box>
 
@@ -84,9 +83,9 @@ const ProductListPage = () => {
                 background: 'linear-gradient(90deg, #7C4DFF 0%, #00E5FF 100%)'
               }
             }}
-          >
-            Создать товар
-          </Button>
+                      >
+              Create Product
+            </Button>
         </Box>
 
         {products.length === 0 ? (
@@ -104,10 +103,10 @@ const ProductListPage = () => {
               }}
             >
               <Typography variant="h5" sx={{ color: '#fff', mb: 2 }}>
-                Нет товаров
+                No Products
               </Typography>
               <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.7)', mb: 3 }}>
-                Добавьте свой первый товар, чтобы начать продажи
+                Add your first product to start selling
               </Typography>
               <Button
                 variant="contained"
@@ -130,7 +129,7 @@ const ProductListPage = () => {
                   }
                 }}
               >
-                Создать первый товар
+                Create First Product
               </Button>
             </Paper>
           </Box>
@@ -139,12 +138,13 @@ const ProductListPage = () => {
             {products.map((product, index) => {
               let title = product.title;
               let description = product.description;
-              if (title === 'Chair') title = 'Стул';
-              if (title === 'Table') title = 'Стол';
-              if (title === 'Sofa') title = 'Диван';
-              if (description === 'Blue chair') description = 'Синий стул';
-              if (description === 'Wooden table') description = 'Деревянный стол';
-              if (description === 'Great sofa') description = 'Отличный диван';
+              // Keep original English titles and descriptions
+              // if (title === 'Chair') title = 'Chair';
+              // if (title === 'Table') title = 'Table';
+              // if (title === 'Sofa') title = 'Sofa';
+              // if (description === 'Blue chair') description = 'Blue chair';
+              // if (description === 'Wooden table') description = 'Wooden table';
+              // if (description === 'Great sofa') description = 'Great sofa';
               return (
                 <Box key={index} sx={{ minWidth: 320, maxWidth: 360, flex: '1 1 320px', m: 1, display: 'flex', flexDirection: 'column' }}>
                   <Link to={`/product/${product.id}`} style={{ display: 'block', textDecoration: 'none', color: 'inherit', height: '100%' }}>
@@ -172,7 +172,7 @@ const ProductListPage = () => {
                     >
                       <Box sx={{ width: '100%', minHeight: 200, maxHeight: 200, flexShrink: 0, overflow: 'hidden', position: 'relative' }}>
                         <img
-                          src={product.image || 'https://via.placeholder.com/300x200?text=Нет+фото'}
+                          src={product.image || 'https://via.placeholder.com/300x200?text=No+Photo'}
                           alt={title}
                           style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                         />

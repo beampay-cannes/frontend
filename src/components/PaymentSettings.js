@@ -4,7 +4,7 @@ import { Save as SaveIcon, Wallet as WalletIcon, NetworkCheck as NetworkIcon } f
 
 const PaymentSettings = () => {
   const [settings, setSettings] = useState({
-    network: 'ethereum',
+    network: 'base',
     walletAddress: '',
     isDefault: true
   });
@@ -13,10 +13,15 @@ const PaymentSettings = () => {
 
   // Получаем адрес продавца с backend
   useEffect(() => {
-    fetch('/api/seller')
+    fetch('/seller.json')
       .then(res => res.json())
       .then(data => {
-        setSettings(prev => ({ ...prev, walletAddress: data.walletAddress || '' }));
+        const network = data.chain_id === '6' ? 'base' : data.chain_id === '14' ? 'worldchain' : 'ethereum';
+        setSettings(prev => ({ 
+          ...prev, 
+          walletAddress: data.walletAddress || '',
+          network: network
+        }));
       });
   }, []);
 
@@ -38,16 +43,31 @@ const PaymentSettings = () => {
     setIsLoading(true);
     setMessage({ type: '', text: '' });
     try {
+      // Определяем chain_id на основе выбранной сети
+      const chain_id = settings.network === 'base' ? '6' : settings.network === 'worldchain' ? '14' : '0';
+      
+      // Обновляем seller.json
+      const sellerData = {
+        walletAddress: settings.walletAddress,
+        chain_id: chain_id
+      };
+      
       const res = await fetch('/api/seller', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ walletAddress: settings.walletAddress })
+        body: JSON.stringify(sellerData)
       });
-      const result = await res.json();
-      if (result.success) {
-        setMessage({ type: 'success', text: 'Адрес продавца успешно сохранён!' });
+      
+      if (res.ok) {
+        setMessage({ type: 'success', text: 'Настройки успешно сохранены!' });
+        // Обновляем состояние после успешного сохранения
+        setSettings(prev => ({ 
+          ...prev, 
+          walletAddress: settings.walletAddress,
+          network: settings.network
+        }));
       } else {
-        setMessage({ type: 'error', text: result.error || 'Ошибка при сохранении' });
+        setMessage({ type: 'error', text: 'Ошибка при сохранении' });
       }
     } catch (error) {
       setMessage({ type: 'error', text: 'Ошибка при сохранении' });
@@ -107,12 +127,14 @@ const PaymentSettings = () => {
               onChange={(e) => handleChange('walletAddress', e.target.value)}
               placeholder="0x..."
               sx={{ mb: 3 }}
-              error={settings.walletAddress && !isValidAddress(settings.walletAddress)}
+              error={Boolean(settings.walletAddress && !isValidAddress(settings.walletAddress))}
               helperText={settings.walletAddress && !isValidAddress(settings.walletAddress)
                 ? 'Неверный формат адреса'
                 : 'Введите адрес кошелька для приема платежей'
               }
             />
+            
+
             <Button
               variant="contained"
               fullWidth

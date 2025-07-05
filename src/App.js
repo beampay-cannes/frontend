@@ -10,7 +10,7 @@ import ProductListPage from './components/ProductListPage';
 import ProductPage from './components/ProductPage';
 import OrderListPage from './components/OrderListPage';
 import OrderPayPage from './components/OrderPayPage';
-import MobilePayPage from './components/MobilePayPage';
+
 import PaymentSettings from './components/PaymentSettings';
 import NavBar from './components/NavBar';
 import './App.css';
@@ -101,7 +101,7 @@ function App() {
             <Route path="/product/:id" element={<ProductPage />} />
             <Route path="/orders" element={<OrderListPage />} />
             <Route path="/order/:orderId/pay" element={<OrderPayPage />} />
-            <Route path="/order/:orderId/pay/mobile" element={<MobilePayPage />} />
+
             <Route path="/payment-settings" element={<PaymentSettings />} />
           </Routes>
         </div>

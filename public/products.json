@@ -1,23 +1,16 @@
 [
   {
-    "id": 1,
-    "title": "Chair",
-    "description": "Blue chair",
-    "price": 50,
-    "image": "https://images.unsplash.com/photo-1519125323398-675f0ddb6308"
+    "title": "T-shirt USDC",
+    "description": "T-shirt USDC",
+    "price": 1,
+    "image": "/uploads/1751754755034_unisex-staple-t-shirt-white-front-61c2367a3d6a4_800x.webp",
+    "id": 1751754756929
   },
   {
-    "id": 2,
-    "title": "Table",
-    "description": "Wooden table",
-    "price": 120,
-    "image": "https://images.unsplash.com/photo-1519710164239-da123dc03ef4"
-  },
-  {
-    "title": "Sofa",
-    "description": "Great sofa",
-    "price": 50,
-    "image": "/uploads/1751635717830_4thaug_2ndhalf5934_green.webp",
-    "id": 1751635721311
+    "title": "T-shirt Flow",
+    "description": "T-shirt Flow",
+    "price": 1,
+    "image": "/uploads/1751754780220_tricko-flow-corp-tee-black-3.jpg",
+    "id": 1751754781443
   }
 ]

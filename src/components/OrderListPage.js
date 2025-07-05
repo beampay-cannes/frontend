@@ -10,11 +10,12 @@ import {
   TableHead,
   TableRow,
   Paper,
-  AppBar,
-  Toolbar,
-  IconButton
+  Box,
+  Button,
+  IconButton,
+  Tooltip
 } from '@mui/material';
-import { ArrowBack as ArrowBackIcon, Home as HomeIcon, Delete as DeleteIcon } from '@mui/icons-material';
+import { Delete as DeleteIcon } from '@mui/icons-material';
 
 const OrderListPage = () => {
   const navigate = useNavigate();
@@ -26,104 +27,128 @@ const OrderListPage = () => {
       .then(data => setOrders(data));
   }, []);
 
-  const handleDelete = async (orderId) => {
-    if (!window.confirm('Delete this order?')) return;
-    try {
-      const response = await fetch(`http://localhost:4000/orders/${orderId}/delete`, { method: 'POST' });
-      const data = await response.json();
-      if (data.success) {
-        setOrders(orders => orders.filter(order => order.id !== orderId));
-      } else {
-        alert('Failed to delete order');
+  const handleDeleteOrder = async (orderId) => {
+    if (window.confirm('Вы уверены, что хотите удалить этот заказ?')) {
+      try {
+        const response = await fetch(`/orders/${orderId}/delete`, {
+          method: 'POST'
+        });
+        
+        if (response.ok) {
+          // Обновляем список заказов
+          setOrders(prevOrders => prevOrders.filter(order => order.id !== orderId));
+        } else {
+          alert('Ошибка при удалении заказа');
+        }
+      } catch (error) {
+        console.error('Error deleting order:', error);
+        alert('Ошибка при удалении заказа');
       }
-    } catch (err) {
-      alert('Failed to delete order');
     }
   };
 
   return (
-    <>
-      <AppBar position="static">
-        <Toolbar>
-          <IconButton edge="start" color="inherit" onClick={() => navigate('/dashboard')} sx={{ mr: 2 }}>
-            <ArrowBackIcon />
-          </IconButton>
-          <IconButton color="inherit" onClick={() => navigate('/')} sx={{ mr: 1 }}>
-            <HomeIcon />
-          </IconButton>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            Order List
-          </Typography>
-        </Toolbar>
-      </AppBar>
-      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom sx={{ textAlign: 'center' }}>
+    <Box sx={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%)', pt: 8, pb: 8 }}>
+      <Container maxWidth="lg">
+        <Typography variant="h4" component="h1" gutterBottom sx={{ textAlign: 'center', color: '#fff', fontWeight: 700, mb: 4 }}>
           Orders
         </Typography>
-        {orders.length === 0 ? (
-          <Typography variant="h6" color="text.secondary" align="center">
-            No orders found
-          </Typography>
-        ) : (
-          <TableContainer component={Paper}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell></TableCell>
-                  <TableCell>ID</TableCell>
-                  <TableCell>Product</TableCell>
-                  <TableCell>Name</TableCell>
-                  <TableCell>Address</TableCell>
-                  <TableCell>Quantity</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell>Network</TableCell>
-                  <TableCell>Date</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {orders.slice().reverse().map(order => (
-                  <TableRow key={order.id}>
-                    <TableCell>
-                      <IconButton size="small" color="error" onClick={() => handleDelete(order.id)}>
+        <TableContainer component={Paper} sx={{ borderRadius: 3, boxShadow: '0 8px 40px 0 #7C4DFF22', background: '#181A20' }}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell sx={{ color: '#7C4DFF', fontWeight: 700 }}>ID</TableCell>
+                <TableCell sx={{ color: '#7C4DFF', fontWeight: 700 }}>Product</TableCell>
+                <TableCell sx={{ color: '#7C4DFF', fontWeight: 700 }}>Customer</TableCell>
+                <TableCell sx={{ color: '#7C4DFF', fontWeight: 700 }}>Address</TableCell>
+                <TableCell sx={{ color: '#7C4DFF', fontWeight: 700 }}>Quantity</TableCell>
+                <TableCell sx={{ color: '#7C4DFF', fontWeight: 700 }}>Status</TableCell>
+                <TableCell sx={{ color: '#7C4DFF', fontWeight: 700 }}>Network</TableCell>
+                <TableCell sx={{ color: '#7C4DFF', fontWeight: 700 }}>Date</TableCell>
+                <TableCell sx={{ color: '#7C4DFF', fontWeight: 700 }}>Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {orders.slice().reverse().map(order => (
+                <TableRow
+                  key={order.id}
+                  hover
+                  sx={{ cursor: 'pointer', transition: 'background 0.2s', '&:hover': { background: '#2d2d3a' } }}
+                >
+                  <TableCell 
+                    sx={{ color: '#fff', fontWeight: 600, cursor: 'pointer' }}
+                    onClick={() => navigate(`/order/${order.id}/pay`)}
+                  >
+                    {order.id}
+                  </TableCell>
+                  <TableCell 
+                    sx={{ color: '#fff', cursor: 'pointer' }}
+                    onClick={() => navigate(`/order/${order.id}/pay`)}
+                  >
+                    {order.productTitle}
+                  </TableCell>
+                  <TableCell 
+                    sx={{ color: '#fff', cursor: 'pointer' }}
+                    onClick={() => navigate(`/order/${order.id}/pay`)}
+                  >
+                    {order.name}
+                  </TableCell>
+                  <TableCell 
+                    sx={{ color: '#fff', cursor: 'pointer' }}
+                    onClick={() => navigate(`/order/${order.id}/pay`)}
+                  >
+                    {order.address}
+                  </TableCell>
+                  <TableCell 
+                    sx={{ color: '#fff', cursor: 'pointer' }}
+                    onClick={() => navigate(`/order/${order.id}/pay`)}
+                  >
+                    {order.quantity}
+                  </TableCell>
+                  <TableCell 
+                    sx={{ color: order.status === 'paid' ? '#4CAF50' : order.status === 'unpaid' ? '#f44336' : '#fff', fontWeight: 700, textTransform: 'capitalize', cursor: 'pointer' }}
+                    onClick={() => navigate(`/order/${order.id}/pay`)}
+                  >
+                    {order.status === 'не оплачен' ? 'unpaid' : order.status === 'оплачен' ? 'paid' : order.status}
+                  </TableCell>
+                  <TableCell 
+                    sx={{ color: order.paidNetwork === 'base' ? '#00E5FF' : order.paidNetwork === 'ethereum' ? '#7C4DFF' : '#fff', fontWeight: 700, textTransform: 'capitalize', cursor: 'pointer' }}
+                    onClick={() => navigate(`/order/${order.id}/pay`)}
+                  >
+                    {order.paidNetwork || '-'}
+                  </TableCell>
+                  <TableCell 
+                    sx={{ color: '#fff', cursor: 'pointer' }}
+                    onClick={() => navigate(`/order/${order.id}/pay`)}
+                  >
+                    {new Date(order.createdAt).toLocaleString()}
+                  </TableCell>
+                  <TableCell>
+                    <Tooltip title="Удалить заказ">
+                      <IconButton
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteOrder(order.id);
+                        }}
+                        sx={{ 
+                          color: '#f44336',
+                          '&:hover': { 
+                            backgroundColor: 'rgba(244, 67, 54, 0.1)',
+                            color: '#d32f2f'
+                          }
+                        }}
+                      >
                         <DeleteIcon />
                       </IconButton>
-                    </TableCell>
-                    <TableCell>{order.id}</TableCell>
-                    <TableCell>{order.productTitle}</TableCell>
-                    <TableCell>{order.name}</TableCell>
-                    <TableCell>{order.address}</TableCell>
-                    <TableCell>{order.quantity}</TableCell>
-                    <TableCell>
-                      <span style={{
-                        color: order.status === 'paid' ? 'green' : order.status === 'unpaid' ? 'red' : 'inherit',
-                        fontWeight: 'bold',
-                        textTransform: 'capitalize'
-                      }}>
-                        {order.status === 'не оплачен' ? 'unpaid' : order.status === 'оплачен' ? 'paid' : order.status}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      {order.paidNetwork ? (
-                        <span style={{
-                          color: order.paidNetwork === 'base' ? '#0052ff' : order.paidNetwork === 'ethereum' ? '#627eea' : 'inherit',
-                          fontWeight: 'bold',
-                          textTransform: 'capitalize'
-                        }}>
-                          {order.paidNetwork}
-                        </span>
-                      ) : (
-                        <span style={{ color: 'gray', fontStyle: 'italic' }}>-</span>
-                      )}
-                    </TableCell>
-                    <TableCell>{new Date(order.createdAt).toLocaleString()}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        )}
+                    </Tooltip>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
       </Container>
-    </>
+    </Box>
   );
 };
 

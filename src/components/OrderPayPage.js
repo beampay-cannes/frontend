@@ -6,71 +6,16 @@ import {
   Box,
   Button,
   Card,
-  CardContent,
-  Grid,
   Chip
 } from '@mui/material';
 import { ethers } from 'ethers';
-
-import { 
-  getNetworkConfig, 
-  NETWORK_CONFIGS 
-} from '../config/rpc';
 import { createEIP7702Transaction } from '../utils/eip7702';
 
-// Адреса контрактов для разных сетей
-const CONTRACT_ADDRESSES = {
-  ethereum: '0x50c8d8db0711bd17fc21e1e111327580ae41a8ef',
-  base: '0xf9397f60c1a45c572132e9e0da89f5e7e71da2ef'
-};
-
-const getContractAddress = (network) => {
-  return CONTRACT_ADDRESSES[network] || CONTRACT_ADDRESSES.ethereum;
-};
+import { 
+  NETWORK_CONFIGS 
+} from '../config/rpc';
 
 
-const USDC_ADDRESS = '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48';
-const CCTP_V2_ADDRESS = '0x28b5a0e9C621a5BadaA536219b3a228C8168cf5d';
-const commitSelector = '0x64fc31b3';
-const revealSelector = '0x97bf794b';
-const TO_ADDRESS = '0x87555C010f5137141ca13b42855d90a108887005'; // Recipient address
-
-// Функция для получения домена CCTP V2 в зависимости от сети
-const getCCTPDomain = (network) => {
-  const domains = {
-    ethereum: 0,    // Ethereum domain
-    base: 6,        // Base domain
-    worldchain: 14  // World Chain domain
-  };
-  return domains[network] || 0; // По умолчанию Ethereum
-};
-
-function strip0x(str) {
-  return typeof str === 'string' && str.startsWith('0x') ? str.slice(2) : str;
-}
-
-const TOKEN_MESSENGER_V2_ABI = [
-  {
-    "inputs": [
-      { "internalType": "uint256", "name": "amount", "type": "uint256" },
-      { "internalType": "uint32", "name": "destinationDomain", "type": "uint32" },
-      { "internalType": "bytes32", "name": "mintRecipient", "type": "bytes32" },
-      { "internalType": "address", "name": "burnToken", "type": "address" },
-      { "internalType": "bytes32", "name": "destinationCaller", "type": "bytes32" },
-      { "internalType": "uint256", "name": "maxFee", "type": "uint256" },
-      { "internalType": "uint32", "name": "minFinalityThreshold", "type": "uint32" }
-    ],
-    "name": "depositForBurn",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  }
-];
-
-const USDC_ABI = [
-  "function approve(address spender, uint256 amount) external returns (bool)",
-  "function allowance(address owner, address spender) external view returns (uint256)"
-];
 
 const OrderPayPage = () => {
   const { orderId } = useParams();
@@ -80,7 +25,7 @@ const OrderPayPage = () => {
   const [signError, setSignError] = useState(null);
   const [currentNetwork, setCurrentNetwork] = useState(null);
   const [isTransactionPending, setIsTransactionPending] = useState(false);
-  const [isAmbireTransactionPending, setIsAmbireTransactionPending] = useState(false);
+  const [approveCompleted, setApproveCompleted] = useState(false);
 
   useEffect(() => {
     fetch('/orders.json')
@@ -97,9 +42,39 @@ const OrderPayPage = () => {
       const detectNetwork = async () => {
         try {
           const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+          console.log('Detected chainId:', chainId);
+          console.log('Available networks:', Object.keys(NETWORK_CONFIGS));
+          
+          // Добавляем детальное логирование для отладки
+          Object.keys(NETWORK_CONFIGS).forEach(network => {
+            console.log(`Network ${network}: chainId = ${NETWORK_CONFIGS[network].chainId}`);
+          });
+          
           const networkName = Object.keys(NETWORK_CONFIGS).find(
             network => NETWORK_CONFIGS[network].chainId === chainId
           );
+          console.log('Detected network name:', networkName);
+          
+          // Если сеть не найдена, попробуем найти по числовому chainId
+          if (!networkName) {
+            const chainIdDecimal = parseInt(chainId, 16);
+            console.log('ChainId decimal:', chainIdDecimal);
+            
+            // Специальная обработка для Base
+            if (chainIdDecimal === 8453) {
+              console.log('Found Base network by decimal chainId');
+              setCurrentNetwork('base');
+              return;
+            }
+            
+            // Специальная обработка для Ethereum
+            if (chainIdDecimal === 1) {
+              console.log('Found Ethereum network by decimal chainId');
+              setCurrentNetwork('ethereum');
+              return;
+            }
+          }
+          
           setCurrentNetwork(networkName || 'unknown');
         } catch (error) {
           console.error('Failed to detect network:', error);
@@ -119,7 +94,7 @@ const OrderPayPage = () => {
     }
   }, []);
 
-  const handleEthersDepositForBurn = async () => {
+  const handlePay = async () => {
     setSignResult(null);
     setSignError(null);
 
@@ -136,196 +111,27 @@ const OrderPayPage = () => {
       return;
     }
 
+    if (!order.wallet || !ethers.isAddress(order.wallet)) {
+      setSignError(`В заказе не указан валидный адрес кошелька получателя! Wallet: ${order.wallet}`);
+      setIsTransactionPending(false);
+      return;
+    }
+
     try {
       setIsTransactionPending(true);
-
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
-
-      const tokenMessengerV2 = new ethers.Contract(
-        CCTP_V2_ADDRESS,
-        TOKEN_MESSENGER_V2_ABI,
-        signer
-      );
-
-      const usdc = new ethers.Contract(USDC_ADDRESS, USDC_ABI, signer);
-      const amount = ethers.parseUnits(order.amount.toString(), 6);
-      const destinationDomain = getCCTPDomain(currentNetwork);
-      const mintRecipient = ethers.zeroPadValue(order.wallet, 32);
-      const burnToken = USDC_ADDRESS;
-      const destinationCaller = ethers.zeroPadValue('0x0', 32);
-      const maxFee = ethers.parseUnits('0.1', 6); // 0.1 USDC
-      const minFinalityThreshold = 100; // для Instant
-
-      const userAddress = await signer.getAddress();
-      const allowance = await usdc.allowance(userAddress, CCTP_V2_ADDRESS);
-      if (allowance < amount) {
-        setSignResult('Approving USDC for CCTP...');
-        const approveTx = await usdc.approve(CCTP_V2_ADDRESS, amount);
-        await approveTx.wait();
-        setSignResult(`USDC approved: ${approveTx.hash}`);
+      setSignResult('Creating EIP-7702 batch transaction (approve + depositForBurn)...');
+      const result = await createEIP7702Transaction(currentNetwork, order.id, order);
+      if (result.success) {
+        setSignResult(`EIP-7702 batch transaction submitted successfully! Transaction Hash: ${result.transactionHash}`);
+        console.log('EIP-7702 result:', result);
       } else {
-        setSignResult('USDC already approved');
+        setSignError(`EIP-7702 transaction failed: ${result.error}`);
       }
-
-      setSignResult('Sending depositForBurn transaction...');
-      const tx = await tokenMessengerV2.depositForBurn(
-        amount,
-        destinationDomain,
-        mintRecipient,
-        burnToken,
-        destinationCaller,
-        maxFee,
-        minFinalityThreshold
-      );
-
-      setSignResult(`Tx sent: ${tx.hash}`);
-      await tx.wait();
-      setSignResult(`Tx confirmed: ${tx.hash}`);
-    } catch (err) {
-      setSignError(err.message || 'Failed to send depositForBurn transaction');
+    } catch (error) {
+      console.error('Error in transaction:', error);
+      setSignError(`Transaction failed: ${error.message}`);
     } finally {
       setIsTransactionPending(false);
-    }
-  };
-
-  // Проверяем, установлен ли Ambire Wallet
-  const isAmbireWalletInstalled = () => {
-    if (typeof window === 'undefined' || !window.ethereum) {
-      return false;
-    }
-    
-    // Проверяем различные способы определения Ambire Wallet
-    return (
-      window.ethereum.isAmbireWallet ||
-      window.ethereum.isAmbire ||
-      window.ethereum.providers?.some(provider => 
-        provider.isAmbireWallet || 
-        provider.isAmbire ||
-        provider.constructor.name === 'AmbireWalletProvider'
-      ) ||
-      // Проверяем по названию в window.ethereum
-      (window.ethereum.constructor.name === 'AmbireWalletProvider') ||
-      // Проверяем по user agent или другим признакам
-      (window.ethereum.selectedProvider && 
-       (window.ethereum.selectedProvider.isAmbireWallet || 
-        window.ethereum.selectedProvider.isAmbire))
-    );
-  };
-
-  // Функция для оплаты через Ambire Wallet
-  const handleAmbireWalletPay = async () => {
-    setSignResult(null);
-    setSignError(null);
-    
-    // Отладочная информация
-    console.log('=== WALLET DEBUG INFO ===');
-    console.log('window.ethereum:', window.ethereum);
-    console.log('window.ethereum.isAmbireWallet:', window.ethereum?.isAmbireWallet);
-    console.log('window.ethereum.isAmbire:', window.ethereum?.isAmbire);
-    console.log('window.ethereum.constructor.name:', window.ethereum?.constructor?.name);
-    console.log('window.ethereum.providers:', window.ethereum?.providers);
-    console.log('isAmbireWalletInstalled():', isAmbireWalletInstalled());
-    
-    if (!isAmbireWalletInstalled()) {
-      setSignError('Ambire Wallet не установлен. Пожалуйста, установите Ambire Wallet.');
-      return;
-    }
-
-    if (!currentNetwork || currentNetwork === 'unknown') {
-      setSignError('Пожалуйста, переключитесь на поддерживаемую сеть (Base, Ethereum или World Chain) в Ambire Wallet');
-      return;
-    }
-
-    if (!order) {
-      setSignError('Заказ не загружен');
-      return;
-    }
-
-    try {
-      setIsAmbireTransactionPending(true);
-      setSignResult('Подключение к Ambire Wallet...');
-
-      // Подключаемся к Ambire Wallet
-      const accounts = await window.ethereum.request({
-        method: 'eth_requestAccounts'
-      });
-      
-      const account = accounts[0];
-      setSignResult('Отправка транзакции через Ambire Wallet...');
-
-      // Подготавливаем данные транзакции
-      const orderIdHex = '0x' + window.BigInt(order.id).toString(16).padStart(64, '0');
-      const contractAddress = getContractAddress(currentNetwork);
-      
-      // Создаем простую транзакцию для Ambire Wallet
-      const transaction = {
-        to: contractAddress,
-        data: `0xbd08606f${orderIdHex.slice(2)}`, // Вызов функции с orderId
-        value: '0x0',
-        from: account
-      };
-
-      // Отправляем транзакцию
-      const hash = await window.ethereum.request({
-        method: 'eth_sendTransaction',
-        params: [transaction]
-      });
-
-      console.log('Ambire Wallet Transaction Hash:', hash);
-      setSignResult(`Транзакция отправлена через Ambire Wallet! Hash: ${hash}`);
-
-      // Проверяем статус транзакции
-      const checkTransactionStatus = async () => {
-        try {
-          const receipt = await window.ethereum.request({
-            method: 'eth_getTransactionReceipt',
-            params: [hash]
-          });
-
-          if (receipt && receipt.status === '0x1') {
-            console.log('Ambire Wallet transaction confirmed!');
-            alert(`Транзакция подтверждена! Hash: ${hash}`);
-            setIsAmbireTransactionPending(false);
-            return true;
-          } else if (receipt && receipt.status === '0x0') {
-            console.error('Ambire Wallet transaction failed');
-            alert('Транзакция не удалась');
-            setIsAmbireTransactionPending(false);
-            return true;
-          }
-          return false;
-        } catch (error) {
-          console.error('Error checking transaction status:', error);
-          return false;
-        }
-      };
-
-      // Polling статуса транзакции
-      let attempts = 0;
-      const maxAttempts = 30;
-      const interval = setInterval(async () => {
-        attempts++;
-        const completed = await checkTransactionStatus();
-
-        if (completed || attempts >= maxAttempts) {
-          clearInterval(interval);
-          if (attempts >= maxAttempts) {
-            console.log('Ambire Wallet transaction polling timed out');
-            alert('Проверка статуса транзакции Ambire Wallet истекла');
-            setIsAmbireTransactionPending(false);
-          }
-        }
-      }, 2000);
-
-    } catch (error) {
-      console.error('=== AMBIRE WALLET ERROR ===');
-      console.error('Error:', error);
-      console.error('Message:', error?.message);
-      console.error('Code:', error?.code);
-
-      setSignError('Ошибка Ambire Wallet: ' + (error?.message || 'Неизвестная ошибка'));
-      setIsAmbireTransactionPending(false);
     }
   };
 
@@ -349,6 +155,10 @@ const OrderPayPage = () => {
           <Typography variant="h4" gutterBottom sx={{ textAlign: 'center', fontWeight: 700, color: '#fff', mb: 4 }}>
             Pay for Order #{order.id}
           </Typography>
+          
+          <Box sx={{ mb: 2, p: 2, bgcolor: 'rgba(0,0,0,0.2)', borderRadius: 2, border: '1px solid #333', overflowX: 'auto', fontSize: 13 }}>
+            <pre style={{ margin: 0, color: '#fff' }}>{JSON.stringify(order, null, 2)}</pre>
+          </Box>
           
           <Box sx={{ textAlign: 'center' }}>
             <Box sx={{ mb: 4, p: 3, bgcolor: 'rgba(124, 77, 255, 0.1)', borderRadius: 3, border: '1px solid rgba(124, 77, 255, 0.3)' }}>
@@ -390,8 +200,24 @@ const OrderPayPage = () => {
                       </Typography>
                     </Box>
                   )}
+                  {order.wallet && (
+                    <Box>
+                      <Typography variant="body2" sx={{ color: 'text.secondary', mb: 0.5 }}>Recipient Wallet</Typography>
+                      <Typography variant="body1" sx={{ color: '#7C4DFF', fontWeight: 700, fontFamily: 'monospace' }}>
+                        {order.wallet}
+                      </Typography>
+                    </Box>
+                  )}
                 </Box>
               </Box>
+              {order.wallet !== undefined && (
+                <Box sx={{ mt: 3, mb: 2, p: 2, bgcolor: 'rgba(124, 77, 255, 0.08)', borderRadius: 2, border: '1px solid rgba(124, 77, 255, 0.2)' }}>
+                  <Typography variant="body2" sx={{ color: 'text.secondary', mb: 0.5 }}>Recipient Wallet (raw)</Typography>
+                  <Typography variant="body1" sx={{ color: '#7C4DFF', fontWeight: 700, fontFamily: 'monospace', wordBreak: 'break-all' }}>
+                    {order.wallet === null ? 'null' : order.wallet === '' ? '(пусто)' : order.wallet}
+                  </Typography>
+                </Box>
+              )}
             </Box>
             
             <Box sx={{ textAlign: 'center' }}>
@@ -406,6 +232,9 @@ const OrderPayPage = () => {
                         fontWeight: 700
                       }}
                     />
+                    <Typography variant="body2" sx={{ color: 'text.secondary', mt: 1 }}>
+                      Network: {currentNetwork} | Domain: {currentNetwork === 'base' ? '6' : currentNetwork === 'ethereum' ? '0' : 'unknown'}
+                    </Typography>
                   </Box>
                 )}
                 
@@ -419,7 +248,7 @@ const OrderPayPage = () => {
                   <Button
                     variant="contained"
                     size="large"
-                    onClick={handleEthersDepositForBurn}
+                    onClick={handlePay}
                     disabled={!currentNetwork || currentNetwork === 'unknown' || isTransactionPending}
                     sx={{ 
                       fontWeight: 700, 

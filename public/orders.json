@@ -1,13 +1,1 @@
-[
-  {
-    "productId": 1,
-    "productTitle": "Chair",
-    "name": "Dmitry",
-    "address": "Cannes, France",
-    "quantity": 1,
-    "amount": 1,
-    "id": 1751745349507,
-    "status": "unpaid",
-    "createdAt": "2025-07-05T19:55:49.507Z"
-  }
-]
+[]

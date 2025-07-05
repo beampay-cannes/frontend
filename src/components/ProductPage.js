@@ -37,6 +37,12 @@ const ProductPage = () => {
       return;
     }
     try {
+      // Получаем кошелёк и chain продавца одним запросом
+      const sellerRes = await fetch('http://localhost:4000/api/seller');
+      const sellerData = await sellerRes.json();
+      const sellerWallet = sellerData.walletAddress;
+      const sellerChainId = sellerData.chain_id;
+
       const res = await fetch(`${BACKEND_URL}/orders`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -45,7 +51,9 @@ const ProductPage = () => {
           productTitle: product.title,
           name,
           address,
-          quantity
+          quantity,
+          wallet: sellerWallet,
+          sellerChainId: sellerChainId
         })
       });
       const result = await res.json();
