@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useState, createContext, useContext } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -13,39 +13,129 @@ import OrderPayPage from './components/OrderPayPage';
 import MobilePayPage from './components/MobilePayPage';
 import PaymentSettings from './components/PaymentSettings';
 import './App.css';
+import { IconButton, Box, Tooltip } from '@mui/material';
+import { Brightness4, Brightness7 } from '@mui/icons-material';
 
-const theme = createTheme({
+// Контекст для темы
+const ColorModeContext = createContext({ toggleColorMode: () => {} });
+
+export const useColorMode = () => useContext(ColorModeContext);
+
+const getDesignTokens = (mode) => ({
   palette: {
-    primary: {
-      main: '#1976d2',
+    mode,
+    primary: { main: '#7C4DFF' }, // Violet Beam
+    secondary: { main: '#00E5FF' }, // Laser Cyan
+    background: {
+      default: mode === 'light' ? '#F5F7FA' : '#181A20',
+      paper: mode === 'light' ? '#FFFFFF' : '#23263B',
     },
-    secondary: {
-      main: '#dc004e',
+    success: { main: '#00C853' },
+    warning: { main: '#FF9100' },
+    info: { main: '#2979FF' },
+    divider: mode === 'light' ? '#E3E6F0' : '#23263B',
+    text: {
+      primary: mode === 'light' ? '#181A20' : '#F5F7FA',
+      secondary: mode === 'light' ? '#7C4DFF' : '#B39DDB',
+    },
+  },
+  shape: { borderRadius: 16 },
+  typography: {
+    fontFamily: 'Inter, Roboto, Arial, sans-serif',
+    h1: { fontWeight: 700 },
+    h2: { fontWeight: 700 },
+    h3: { fontWeight: 700 },
+    h4: { fontWeight: 700 },
+    h5: { fontWeight: 700 },
+    h6: { fontWeight: 700 },
+    button: { textTransform: 'none', fontWeight: 600 },
+  },
+  components: {
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          borderRadius: 12,
+          fontWeight: 600,
+          boxShadow: '0 2px 16px 0 rgba(124,77,255,0.10)',
+          transition: 'all 0.2s',
+        },
+        containedPrimary: {
+          background: 'linear-gradient(90deg, #7C4DFF 0%, #2979FF 100%)',
+          color: '#fff',
+          boxShadow: '0 4px 24px 0 rgba(124,77,255,0.15)',
+        },
+        containedSecondary: {
+          background: 'linear-gradient(90deg, #00E5FF 0%, #7C4DFF 100%)',
+          color: '#fff',
+        },
+      },
+    },
+    MuiCard: {
+      styleOverrides: {
+        root: {
+          borderRadius: 18,
+          boxShadow: '0 4px 32px 0 rgba(124,77,255,0.10)',
+        },
+      },
+    },
+    MuiAppBar: {
+      styleOverrides: {
+        root: {
+          background: 'linear-gradient(90deg, #7C4DFF 0%, #2979FF 100%)',
+          boxShadow: '0 2px 16px 0 rgba(124,77,255,0.10)',
+        },
+      },
     },
   },
 });
 
-function App() {
+function ThemeToggleButton() {
+  const colorMode = useColorMode();
+  const theme = createTheme(getDesignTokens('light'));
+  const isDark = theme.palette.mode === 'dark';
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <Router>
-        <div className="App">
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/create-product" element={<ProductForm />} />
-            <Route path="/payments" element={<PaymentsPage />} />
-            <Route path="/products" element={<ProductListPage />} />
-            <Route path="/product/:id" element={<ProductPage />} />
-            <Route path="/orders" element={<OrderListPage />} />
-            <Route path="/order/:orderId/pay" element={<OrderPayPage />} />
-            <Route path="/order/:orderId/pay/mobile" element={<MobilePayPage />} />
-            <Route path="/payment-settings" element={<PaymentSettings />} />
-          </Routes>
-        </div>
-      </Router>
-    </ThemeProvider>
+    <Tooltip title={isDark ? 'Светлая тема' : 'Тёмная тема'}>
+      <IconButton onClick={colorMode.toggleColorMode} color="inherit" sx={{ ml: 1 }}>
+        {isDark ? <Brightness7 /> : <Brightness4 />}
+      </IconButton>
+    </Tooltip>
+  );
+}
+
+function App() {
+  const [mode, setMode] = useState('light');
+  const colorMode = useMemo(
+    () => ({
+      toggleColorMode: () => {
+        setMode((prevMode) => (prevMode === 'light' ? 'dark' : 'light'));
+      },
+    }),
+    [],
+  );
+  const theme = useMemo(() => createTheme(getDesignTokens(mode)), [mode]);
+
+  return (
+    <ColorModeContext.Provider value={colorMode}>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <Router>
+          <div className="App">
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/dashboard" element={<Dashboard ThemeToggleButton={ThemeToggleButton} />} />
+              <Route path="/create-product" element={<ProductForm />} />
+              <Route path="/payments" element={<PaymentsPage />} />
+              <Route path="/products" element={<ProductListPage />} />
+              <Route path="/product/:id" element={<ProductPage />} />
+              <Route path="/orders" element={<OrderListPage />} />
+              <Route path="/order/:orderId/pay" element={<OrderPayPage />} />
+              <Route path="/order/:orderId/pay/mobile" element={<MobilePayPage />} />
+              <Route path="/payment-settings" element={<PaymentSettings />} />
+            </Routes>
+          </div>
+        </Router>
+      </ThemeProvider>
+    </ColorModeContext.Provider>
   );
 }
 

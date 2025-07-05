@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Container,
   Typography,
@@ -16,18 +17,28 @@ import {
   Divider,
   Grid,
   IconButton,
-  Tooltip
+  Tooltip,
+  AppBar,
+  Toolbar
 } from '@mui/material';
 import {
   Save as SaveIcon,
   ContentCopy as CopyIcon,
   CheckCircle as CheckCircleIcon,
   Wallet as WalletIcon,
-  NetworkCheck as NetworkIcon
+  NetworkCheck as NetworkIcon,
+  ArrowBack as ArrowBackIcon
 } from '@mui/icons-material';
 import { NETWORK_CONFIGS } from '../config/rpc';
+import { 
+  getPaymentSettings, 
+  savePaymentSettings, 
+  isValidWalletAddress,
+  getNetworkInfo as getNetworkInfoUtil 
+} from '../utils/paymentSettings';
 
 const PaymentSettings = () => {
+  const navigate = useNavigate();
   const [settings, setSettings] = useState({
     network: 'ethereum',
     walletAddress: '',
@@ -41,18 +52,15 @@ const PaymentSettings = () => {
 
   // Загружаем сохраненные настройки при монтировании компонента
   useEffect(() => {
-    const saved = localStorage.getItem('paymentSettings');
+    const saved = getPaymentSettings();
     if (saved) {
-      const parsed = JSON.parse(saved);
-      setSettings(parsed);
-      setSavedSettings(parsed);
+      setSettings(saved);
+      setSavedSettings(saved);
     }
   }, []);
 
   // Валидация адреса кошелька
-  const isValidAddress = (address) => {
-    return /^0x[a-fA-F0-9]{40}$/.test(address);
-  };
+  const isValidAddress = isValidWalletAddress;
 
   // Обработка изменения полей
   const handleChange = (field, value) => {
@@ -78,10 +86,14 @@ const PaymentSettings = () => {
     setMessage({ type: '', text: '' });
 
     try {
-      // Сохраняем в localStorage
-      localStorage.setItem('paymentSettings', JSON.stringify(settings));
-      setSavedSettings(settings);
-      setMessage({ type: 'success', text: 'Настройки платежей успешно сохранены!' });
+      // Сохраняем настройки
+      const success = savePaymentSettings(settings);
+      if (success) {
+        setSavedSettings(settings);
+        setMessage({ type: 'success', text: 'Настройки платежей успешно сохранены!' });
+      } else {
+        setMessage({ type: 'error', text: 'Ошибка при сохранении настроек' });
+      }
       
       // Здесь можно добавить отправку на сервер
       // await fetch('/api/payment-settings', {
@@ -116,10 +128,27 @@ const PaymentSettings = () => {
   };
 
   return (
-    <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
-      <Typography variant="h4" component="h1" gutterBottom sx={{ textAlign: 'center', mb: 4 }}>
-        Настройки платежей
-      </Typography>
+    <>
+      <AppBar position="static">
+        <Toolbar>
+          <IconButton
+            edge="start"
+            color="inherit"
+            onClick={() => navigate('/dashboard')}
+            sx={{ mr: 2 }}
+          >
+            <ArrowBackIcon />
+          </IconButton>
+          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+            Настройки платежей
+          </Typography>
+        </Toolbar>
+      </AppBar>
+
+      <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
+        <Typography variant="h4" component="h1" gutterBottom sx={{ textAlign: 'center', mb: 4 }}>
+          Настройки платежей
+        </Typography>
 
       {message.text && (
         <Alert severity={message.type} sx={{ mb: 3 }}>
@@ -286,9 +315,10 @@ const PaymentSettings = () => {
           <Typography variant="body2" color="text.secondary">
             • Рекомендуется использовать кошелек с поддержкой CCTP V2 для кросс-чейн транзакций
           </Typography>
-        </CardContent>
-      </Card>
-    </Container>
+                 </CardContent>
+       </Card>
+     </Container>
+    </>
   );
 };
 

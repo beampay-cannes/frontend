@@ -12,6 +12,8 @@ import {
   Toolbar,
   IconButton,
   Badge,
+  Stack,
+  Tooltip
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -20,8 +22,9 @@ import {
   Home as HomeIcon,
   Settings as SettingsIcon,
 } from '@mui/icons-material';
+import { getPaymentSettings, getNetworkInfo } from '../utils/paymentSettings';
 
-const Dashboard = () => {
+const Dashboard = ({ ThemeToggleButton }) => {
   const navigate = useNavigate();
   const [stats, setStats] = useState({
     totalProducts: 0,
@@ -56,15 +59,19 @@ const Dashboard = () => {
       });
 
     // Загружаем настройки платежей
-    const saved = localStorage.getItem('paymentSettings');
+    const saved = getPaymentSettings();
     if (saved) {
-      setPaymentSettings(JSON.parse(saved));
+      setPaymentSettings(saved);
     }
   }, []);
 
   return (
     <>
-      <AppBar position="static">
+      <AppBar position="static" elevation={0} sx={{
+        background: 'linear-gradient(90deg, #7C4DFF 0%, #2979FF 100%)',
+        boxShadow: '0 2px 16px 0 rgba(124,77,255,0.10)',
+        mb: 4
+      }}>
         <Toolbar>
           <IconButton
             edge="start"
@@ -74,17 +81,56 @@ const Dashboard = () => {
           >
             <HomeIcon />
           </IconButton>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            CRM System
+          <Typography
+            variant="h5"
+            component="div"
+            sx={{
+              flexGrow: 1,
+              fontWeight: 900,
+              letterSpacing: 1.5,
+              background: 'linear-gradient(90deg, #7C4DFF 0%, #00E5FF 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              textShadow: '0 2px 16px #7C4DFF44',
+              userSelect: 'none',
+              fontFamily: 'Inter, Roboto, Arial, sans-serif',
+            }}
+          >
+            BeamPay
           </Typography>
-          <IconButton color="inherit" onClick={() => navigate('/payments')}>
-            <Badge badgeContent={stats.totalPayments} color="secondary">
-              <PaymentIcon />
-            </Badge>
-          </IconButton>
-          <IconButton color="inherit" onClick={() => navigate('/payment-settings')}>
-            <SettingsIcon />
-          </IconButton>
+          <Stack direction="row" spacing={1} alignItems="center">
+            <Tooltip title="Платежи">
+              <IconButton
+                color="inherit"
+                onClick={() => navigate('/payments')}
+                sx={{
+                  boxShadow: '0 0 8px 2px #00E5FF88',
+                  borderRadius: 2,
+                  transition: 'box-shadow 0.2s',
+                  '&:hover': { boxShadow: '0 0 16px 4px #00E5FF' }
+                }}
+              >
+                <Badge badgeContent={stats.totalPayments} color="secondary">
+                  <PaymentIcon />
+                </Badge>
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Настройки платежей">
+              <IconButton
+                color="inherit"
+                onClick={() => navigate('/payment-settings')}
+                sx={{
+                  boxShadow: '0 0 8px 2px #7C4DFF88',
+                  borderRadius: 2,
+                  transition: 'box-shadow 0.2s',
+                  '&:hover': { boxShadow: '0 0 16px 4px #7C4DFF' }
+                }}
+              >
+                <SettingsIcon />
+              </IconButton>
+            </Tooltip>
+            {ThemeToggleButton && <ThemeToggleButton />}
+          </Stack>
         </Toolbar>
       </AppBar>
 
@@ -158,9 +204,7 @@ const Dashboard = () => {
                 Настройки платежей
               </Typography>
               <Typography variant="body1" sx={{ mb: 1 }}>
-                Сеть: <strong>{paymentSettings.network === 'ethereum' ? 'Ethereum' : 
-                               paymentSettings.network === 'base' ? 'Base' : 
-                               paymentSettings.network === 'worldchain' ? 'World Chain' : 'Неизвестно'}</strong>
+                Сеть: <strong>{getNetworkInfo(paymentSettings.network).name}</strong>
               </Typography>
               <Typography variant="body2" sx={{ fontFamily: 'monospace', mb: 2 }}>
                 Адрес: {paymentSettings.walletAddress}
