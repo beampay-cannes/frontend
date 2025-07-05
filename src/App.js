@@ -12,6 +12,7 @@ import OrderListPage from './components/OrderListPage';
 import OrderPayPage from './components/OrderPayPage';
 import MobilePayPage from './components/MobilePayPage';
 import PaymentSettings from './components/PaymentSettings';
+import NavBar from './components/NavBar';
 import './App.css';
 import { IconButton, Box, Tooltip } from '@mui/material';
 import { Brightness4, Brightness7 } from '@mui/icons-material';
@@ -102,6 +103,24 @@ function ThemeToggleButton() {
   );
 }
 
+function SellersPage() {
+  return (
+    <Box sx={{ mt: 8, textAlign: 'center' }}>
+      <h2 style={{ fontWeight: 900, fontSize: 36, marginBottom: 24 }}>Sellers</h2>
+      <p style={{ fontSize: 20, color: '#7C4DFF' }}>List of all sellers will be here.</p>
+    </Box>
+  );
+}
+
+function CreateSellerPage() {
+  return (
+    <Box sx={{ mt: 8, textAlign: 'center' }}>
+      <h2 style={{ fontWeight: 900, fontSize: 36, marginBottom: 24 }}>Create Seller</h2>
+      <p style={{ fontSize: 20, color: '#7C4DFF' }}>Seller registration form will be here.</p>
+    </Box>
+  );
+}
+
 function App() {
   const [mode, setMode] = useState('light');
   const colorMode = useMemo(
@@ -119,6 +138,7 @@ function App() {
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <Router>
+          <NavBar ThemeToggleButton={ThemeToggleButton} />
           <div className="App">
             <Routes>
               <Route path="/" element={<HomePage />} />
@@ -131,6 +151,8 @@ function App() {
               <Route path="/order/:orderId/pay" element={<OrderPayPage />} />
               <Route path="/order/:orderId/pay/mobile" element={<MobilePayPage />} />
               <Route path="/payment-settings" element={<PaymentSettings />} />
+              <Route path="/sellers" element={<SellersPage />} />
+              <Route path="/create-seller" element={<CreateSellerPage />} />
             </Routes>
           </div>
         </Router>
