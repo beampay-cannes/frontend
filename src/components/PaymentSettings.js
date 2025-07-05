@@ -16,7 +16,10 @@ const PaymentSettings = () => {
     fetch('/seller.json')
       .then(res => res.json())
       .then(data => {
-        const network = data.chain_id === '6' ? 'base' : data.chain_id === '14' ? 'worldchain' : 'ethereum';
+        const network = data.chain_id === '6' ? 'base' : 
+                      data.chain_id === '14' ? 'worldchain' : 
+                      data.chain_id === '48900' ? 'zircuit' : 
+                      data.chain_id === '747' ? 'flow' : 'ethereum';
         setSettings(prev => ({ 
           ...prev, 
           walletAddress: data.walletAddress || '',
@@ -44,7 +47,10 @@ const PaymentSettings = () => {
     setMessage({ type: '', text: '' });
     try {
       // Определяем chain_id на основе выбранной сети
-      const chain_id = settings.network === 'base' ? '6' : settings.network === 'worldchain' ? '14' : '0';
+      const chain_id = settings.network === 'base' ? '6' : 
+                       settings.network === 'worldchain' ? '14' : 
+                       settings.network === 'zircuit' ? '48900' : 
+                       settings.network === 'flow' ? '747' : '0';
       
       // Обновляем seller.json
       const sellerData = {
@@ -116,6 +122,18 @@ const PaymentSettings = () => {
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <NetworkIcon sx={{ mr: 1, color: '#FF6B35' }} />
                     World Chain
+                  </Box>
+                </MenuItem>
+                <MenuItem value="zircuit">
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <NetworkIcon sx={{ mr: 1, color: '#9C27B0' }} />
+                    Zircuit
+                  </Box>
+                </MenuItem>
+                <MenuItem value="flow">
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <NetworkIcon sx={{ mr: 1, color: '#00EF8B' }} />
+                    Flow
                   </Box>
                 </MenuItem>
               </Select>

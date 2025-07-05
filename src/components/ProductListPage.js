@@ -197,7 +197,7 @@ const ProductListPage = () => {
                           variant="h5"
                           sx={{ color: '#7C4DFF', fontWeight: 700, textAlign: 'center', textShadow: '0 0 8px rgba(124,77,255,0.5)' }}
                         >
-                          ₽{product.price}
+                          {product.price} USDC
                         </Typography>
                       </Box>
                     </Paper>

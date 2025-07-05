@@ -26,6 +26,8 @@ const OrderPayPage = () => {
   const [currentNetwork, setCurrentNetwork] = useState(null);
   const [isTransactionPending, setIsTransactionPending] = useState(false);
   const [approveCompleted, setApproveCompleted] = useState(false);
+  const [beamPayAvailable, setBeamPayAvailable] = useState(false);
+  const [beamPaySupportedNetworks, setBeamPaySupportedNetworks] = useState([]);
 
   useEffect(() => {
     fetch('/orders.json')
@@ -35,6 +37,34 @@ const OrderPayPage = () => {
         setOrder(found);
       });
   }, [orderId]);
+
+  // Check for BeamPay availability
+  useEffect(() => {
+    const checkBeamPay = () => {
+      if (window.beampay && window.beampay.isAvailable()) {
+        console.log('BeamPay is ready!');
+        setBeamPayAvailable(true);
+        const supportedNetworks = window.beampay.getSupportedNetworks();
+        console.log('Supported networks:', supportedNetworks);
+        setBeamPaySupportedNetworks(supportedNetworks);
+      }
+    };
+
+    // Check immediately
+    checkBeamPay();
+
+    // Listen for BeamPay ready event
+    const handleBeamPayReady = () => {
+      console.log('BeamPay API is now available!');
+      checkBeamPay();
+    };
+
+    window.addEventListener('beampay-ready', handleBeamPayReady);
+
+    return () => {
+      window.removeEventListener('beampay-ready', handleBeamPayReady);
+    };
+  }, []);
 
   // Определяем текущую сеть из MetaMask
   useEffect(() => {
@@ -73,6 +103,20 @@ const OrderPayPage = () => {
               setCurrentNetwork('ethereum');
               return;
             }
+            
+            // Специальная обработка для Zircuit
+            if (chainIdDecimal === 48900) {
+              console.log('Found Zircuit network by decimal chainId');
+              setCurrentNetwork('zircuit');
+              return;
+            }
+            
+            // Специальная обработка для Flow
+            if (chainIdDecimal === 747) {
+              console.log('Found Flow network by decimal chainId');
+              setCurrentNetwork('flow');
+              return;
+            }
           }
           
           setCurrentNetwork(networkName || 'unknown');
@@ -103,7 +147,7 @@ const OrderPayPage = () => {
       return;
     }
     if (!currentNetwork || currentNetwork === 'unknown') {
-      setSignError('Please switch to a supported network (Base, Ethereum, or World Chain) in MetaMask');
+      setSignError('Please switch to a supported network (Base, Ethereum, World Chain, Zircuit, or Flow) in MetaMask');
       return;
     }
     if (!order) {
@@ -130,6 +174,69 @@ const OrderPayPage = () => {
     } catch (error) {
       console.error('Error in transaction:', error);
       setSignError(`Transaction failed: ${error.message}`);
+    } finally {
+      setIsTransactionPending(false);
+    }
+  };
+
+  const handleBeamPayPayment = async () => {
+    setSignResult(null);
+    setSignError(null);
+
+    if (!beamPayAvailable) {
+      setSignError('BeamPay extension is not available. Please install the BeamPay Chrome extension.');
+      return;
+    }
+
+    if (!order) {
+      setSignError('Order not loaded');
+      return;
+    }
+
+    if (!order.wallet || !ethers.isAddress(order.wallet)) {
+      setSignError(`Invalid recipient wallet address in order! Wallet: ${order.wallet}`);
+      return;
+    }
+
+    if (!order.amount || order.amount <= 0) {
+      setSignError(`Invalid payment amount in order! Amount: ${order.amount}`);
+      return;
+    }
+
+    // Map current network to BeamPay supported networks
+    const networkMapping = {
+      'ethereum': 'ethereum',
+      'base': 'ethereum', // BeamPay might use 'ethereum' for mainnet-compatible networks
+      'world': 'ethereum',  // Fallback to ethereum for unsupported networks
+      'zircuit': 'zircuit', // Zircuit is supported by BeamPay
+      'flow': 'flow'        // Flow is supported by BeamPay
+    };
+
+    const beamPayNetwork = networkMapping[currentNetwork] || 'ethereum';
+
+    // Check if the network is supported by BeamPay
+    if (!beamPaySupportedNetworks.includes(beamPayNetwork)) {
+      setSignError(`Network ${currentNetwork} is not supported by BeamPay. Supported networks: ${beamPaySupportedNetworks.join(', ')}`);
+      return;
+    }
+
+    try {
+      setIsTransactionPending(true);
+      setSignResult('Processing payment with BeamPay...');
+
+      const result = await window.beampay.sendPayment({
+        chain: beamPayNetwork,
+        amount: order.amount.toString(),
+        to: order.wallet,
+        paymentId: `order_${order.id}`
+      });
+
+      console.log('BeamPay payment successful!', result);
+      setSignResult(`BeamPay payment successful! Transaction Hash: ${result.txHash}, Network: ${result.network}, Method: ${result.method}`);
+
+    } catch (error) {
+      console.error('BeamPay payment failed:', error);
+      setSignError(`BeamPay payment failed: ${error.message}`);
     } finally {
       setIsTransactionPending(false);
     }
@@ -233,14 +340,31 @@ const OrderPayPage = () => {
                       }}
                     />
                     <Typography variant="body2" sx={{ color: 'text.secondary', mt: 1 }}>
-                      Network: {currentNetwork} | Domain: {currentNetwork === 'base' ? '6' : currentNetwork === 'ethereum' ? '0' : 'unknown'}
+                      Network: {currentNetwork} | Domain: {currentNetwork === 'base' ? '6' : currentNetwork === 'ethereum' ? '0' : currentNetwork === 'zircuit' ? '48900' : currentNetwork === 'flow' ? '747' : 'unknown'}
                     </Typography>
+                    
+                    {beamPayAvailable && (
+                      <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+                        <Chip 
+                          label="BeamPay Available"
+                          size="small"
+                          sx={{ 
+                            background: 'linear-gradient(90deg, #FF6B35 0%, #F7931E 100%)',
+                            color: '#fff',
+                            fontWeight: 600
+                          }}
+                        />
+                        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                          Networks: {beamPaySupportedNetworks.join(', ')}
+                        </Typography>
+                      </Box>
+                    )}
                   </Box>
                 )}
                 
                 {currentNetwork === 'unknown' && (
                   <Typography variant="body2" sx={{ color: '#ff9800', mb: 3 }}>
-                    Please switch to Base, Ethereum, or World Chain network in MetaMask
+                    Please switch to Base, Ethereum, World Chain, Zircuit, or Flow network in MetaMask
                   </Typography>
                 )}
 
@@ -263,6 +387,35 @@ const OrderPayPage = () => {
                   >
                     {isTransactionPending ? 'Transaction Pending...' : 'Pay with MetaMask (USDC + CCTP V2)'}
                   </Button>
+
+                  {beamPayAvailable && (
+                    <Button
+                      variant="contained"
+                      size="large"
+                      onClick={handleBeamPayPayment}
+                      disabled={isTransactionPending}
+                      sx={{ 
+                        fontWeight: 700, 
+                        fontSize: 16, 
+                        py: 1.5,
+                        background: 'linear-gradient(90deg, #FF6B35 0%, #F7931E 100%)',
+                        boxShadow: '0 4px 24px 0 #FF6B3533',
+                        '&:hover': {
+                          background: 'linear-gradient(90deg, #e55a2b 0%, #de841a 100%)'
+                        }
+                      }}
+                    >
+                      {isTransactionPending ? 'Transaction Pending...' : 'Pay with BeamPay (USDC)'}
+                    </Button>
+                  )}
+
+                  {!beamPayAvailable && (
+                    <Box sx={{ mt: 2, p: 2, bgcolor: 'rgba(255, 193, 7, 0.1)', borderRadius: 3, border: '1px solid rgba(255, 193, 7, 0.3)' }}>
+                      <Typography variant="body2" sx={{ color: '#FFC107', textAlign: 'center' }}>
+                        BeamPay extension not detected. Install the BeamPay Chrome extension for additional payment options.
+                      </Typography>
+                    </Box>
+                  )}
                 </Box>
                 
                 {signResult && (

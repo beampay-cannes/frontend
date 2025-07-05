@@ -7,13 +7,13 @@ const CHAINS = require('./chains.config');
 // const BASE_CONTRACT_ADDRESS = '...';
 // const BASE_ALCHEMY_RPC = '...';
 
-// Ethereum Network Configuration
-const ETH_CONTRACT_ADDRESS = '0x50c8d8db0711bd17fc21e1e111327580ae41a8ef';
+// Ethereum Network Configuration (updated for ConfirmedPayment event)
+const ETH_CONTRACT_ADDRESS = '0x2BfC586A555bFd792b9a8b0936277b515CF45773';
 const ETH_ALCHEMY_RPC = 'https://eth-mainnet.g.alchemy.com/v2/hFeeeDTV-4tpKPrCml4oxMtL4IW6u7a_';
 
 const ORDERS_PATH = path.join(__dirname, '../public/orders.json');
 const LAST_SYNCED_BLOCK_PATH = path.join(__dirname, 'last_synced_block.json');
-const EVENT_TOPIC = 'bd08606ff9a1cf52e08c39be01403b1ac0f930e1be6edbba825cfa3ffa9f3249';
+const EVENT_TOPIC = '0x71b4e18d983a3d72dfd6b1450d60c020be859bd1f345a9c61fd7a0c9dc2b3502';
 
 // Только Ethereum клиент
 const ethProvider = new ethers.JsonRpcProvider(ETH_ALCHEMY_RPC);
@@ -53,14 +53,90 @@ async function getEventsFromNode(provider, contractAddress, eventTopic, fromBloc
       toBlock: toBlock,
       topics: [eventTopic]
     });
-    return logs.map(log => ethers.getBigInt(log.topics[1]).toString());
+    
+    // Парсим события ConfirmedPayment(address indexed to, uint256 indexed amount, string paymentId)
+    const events = [];
+    for (const log of logs) {
+      try {
+        // Декодируем данные события
+        const iface = new ethers.Interface([
+          'event ConfirmedPayment(address indexed to, uint256 indexed amount, string paymentId)'
+        ]);
+        const decoded = iface.parseLog(log);
+        
+        // Извлекаем paymentId из события
+        const paymentId = decoded.args.paymentId;
+        console.log(`Found ConfirmedPayment event: to=${decoded.args.to}, amount=${decoded.args.amount}, paymentId=${paymentId}`);
+        
+        // Извлекаем order ID из paymentId (формат: "order_123")
+        if (paymentId.startsWith('order_')) {
+          const orderId = paymentId.replace('order_', '');
+          events.push(orderId);
+        }
+      } catch (decodeError) {
+        console.error('Error decoding event:', decodeError);
+      }
+    }
+    
+    return events;
   } catch (error) {
     console.error('Error fetching logs from node:', error);
     return [];
   }
 }
 
-// Обновление заказов через ноду для конкретной сети
+// Обновление заказов через ноду для конкретной сети (on-the-fly режим)
+async function updateOrdersFromNodeOnTheFly(provider, contractAddress, eventTopic, networkName, lastSyncedBlock) {
+  try {
+    if (lastSyncedBlock === null) {
+      console.log(`No last synced block found for ${networkName}, skipping...`);
+      return lastSyncedBlock;
+    }
+    const latestBlock = Number(await provider.getBlockNumber());
+    if (latestBlock <= lastSyncedBlock) {
+      console.log(`No new blocks on ${networkName}. Last synced: ${lastSyncedBlock}, Latest: ${latestBlock} (0 blocks)`);
+      return lastSyncedBlock;
+    }
+    
+    // On-the-fly режим: сканируем только самые новые блоки (максимум последние 10 блоков)
+    const maxBlocksToScan = 10;
+    const fromBlock = Math.max(lastSyncedBlock + 1, latestBlock - maxBlocksToScan + 1);
+    const toBlock = latestBlock;
+    
+    if (fromBlock <= toBlock) {
+      const blocksProcessed = toBlock - fromBlock + 1;
+      console.log(`Scanning recent blocks on ${networkName}: ${fromBlock} to ${toBlock} (${blocksProcessed} blocks, on-the-fly mode)`);
+      const paidOrderIds = await getEventsFromNode(provider, contractAddress, eventTopic, fromBlock, toBlock);
+      if (paidOrderIds.length > 0) {
+        console.log(`Found ${paidOrderIds.length} new paid orders on ${networkName}:`, paidOrderIds);
+        const ordersData = fs.readFileSync(ORDERS_PATH, 'utf8');
+        const orders = JSON.parse(ordersData);
+        let updated = false;
+        for (const order of orders) {
+          if (paidOrderIds.includes(order.id.toString()) && order.status !== 'paid') {
+            order.status = 'paid';
+            order.paidAt = new Date().toISOString();
+            order.paidNetwork = networkName;
+            updated = true;
+            console.log(`Order ${order.id} marked as paid (from ${networkName} on-the-fly)`);
+          }
+        }
+        if (updated) {
+          fs.writeFileSync(ORDERS_PATH, JSON.stringify(orders, null, 2));
+          console.log(`orders.json updated from ${networkName} (on-the-fly mode)`);
+        }
+      }
+    }
+    
+    console.log(`Updated last synced block for ${networkName} to: ${latestBlock} (on-the-fly mode)`);
+    return latestBlock;
+  } catch (error) {
+    console.error(`Error in updateOrdersFromNodeOnTheFly for ${networkName}:`, error);
+    return lastSyncedBlock;
+  }
+}
+
+// Обновление заказов через ноду для конкретной сети (старая функция, оставлена для совместимости)
 async function updateOrdersFromNode(provider, contractAddress, eventTopic, networkName, lastSyncedBlock) {
   try {
     if (lastSyncedBlock === null) {
@@ -107,30 +183,30 @@ async function updateOrders() {
   const enabledChains = CHAINS.filter(c => c.enabled);
   const lastSyncedBlocks = getLastSyncedBlockFromFile(enabledChains);
 
-  // Первый запуск - инициализация с текущих блоков
+  // Первый запуск - инициализация с текущих блоков (но не сканируем старые блоки)
   let needInit = false;
   for (const chain of enabledChains) {
     if (lastSyncedBlocks[chain.name] === null) needInit = true;
   }
   if (needInit) {
-    console.log('First run - initializing enabled networks from current blocks...');
+    console.log('First run - initializing enabled networks from current blocks (on-the-fly mode)...');
     const newBlocks = {};
     for (const chain of enabledChains) {
       const provider = new ethers.JsonRpcProvider(chain.rpc);
       const latestBlock = Number(await provider.getBlockNumber());
       newBlocks[chain.name] = latestBlock;
-      console.log(`Initialized ${chain.name} starting block: ${latestBlock}`);
+      console.log(`Initialized ${chain.name} starting block: ${latestBlock} (on-the-fly mode)`);
     }
     saveLastSyncedBlock(newBlocks);
     return;
   }
 
-  // Последующие запуски - сканируем только включённые сети
-  console.log('Updating orders from enabled networks...');
+  // Последующие запуски - сканируем только новые блоки (on-the-fly режим)
+  console.log('Updating orders from enabled networks (on-the-fly mode)...');
   const newBlocks = {};
   for (const chain of enabledChains) {
     const provider = new ethers.JsonRpcProvider(chain.rpc);
-    const newBlock = await updateOrdersFromNode(
+    const newBlock = await updateOrdersFromNodeOnTheFly(
       provider,
       chain.contract,
       chain.eventTopic,

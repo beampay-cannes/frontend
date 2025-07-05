@@ -19,6 +19,20 @@ export const WORLD_CHAIN_ID_DECIMAL = parseInt(process.env.REACT_APP_WORLD_CHAIN
 export const WORLD_CHAIN_NAME = process.env.REACT_APP_WORLD_CHAIN_NAME || 'World Chain';
 export const WORLD_EXPLORER_URL = process.env.REACT_APP_WORLD_EXPLORER_URL || 'https://explorer.worldchain.world';
 
+// Zircuit Configuration
+export const ZIRCUIT_RPC_URL = process.env.REACT_APP_ZIRCUIT_RPC_URL || 'https://zircuit-mainnet.drpc.org';
+export const ZIRCUIT_CHAIN_ID = process.env.REACT_APP_ZIRCUIT_CHAIN_ID || '0xbef4';
+export const ZIRCUIT_CHAIN_ID_DECIMAL = parseInt(process.env.REACT_APP_ZIRCUIT_CHAIN_ID_DECIMAL) || 48900;
+export const ZIRCUIT_CHAIN_NAME = process.env.REACT_APP_ZIRCUIT_CHAIN_NAME || 'Zircuit';
+export const ZIRCUIT_EXPLORER_URL = process.env.REACT_APP_ZIRCUIT_EXPLORER_URL || 'https://explorer.zircuit.com';
+
+// Flow Configuration
+export const FLOW_RPC_URL = process.env.REACT_APP_FLOW_RPC_URL || 'https://mainnet.evm.nodes.onflow.org';
+export const FLOW_CHAIN_ID = process.env.REACT_APP_FLOW_CHAIN_ID || '0x2eb';
+export const FLOW_CHAIN_ID_DECIMAL = parseInt(process.env.REACT_APP_FLOW_CHAIN_ID_DECIMAL) || 747;
+export const FLOW_CHAIN_NAME = process.env.REACT_APP_FLOW_CHAIN_NAME || 'Flow';
+export const FLOW_EXPLORER_URL = process.env.REACT_APP_FLOW_EXPLORER_URL || 'https://evm.flowscan.io';
+
 // Network configurations for MetaMask
 export const NETWORK_CONFIGS = {
   base: {
@@ -108,6 +122,28 @@ export const NETWORK_CONFIGS = {
     },
     rpcUrls: [WORLD_RPC_URL],
     blockExplorerUrls: [WORLD_EXPLORER_URL],
+  },
+  zircuit: {
+    chainId: ZIRCUIT_CHAIN_ID,
+    chainName: ZIRCUIT_CHAIN_NAME,
+    nativeCurrency: { 
+      name: 'Ether', 
+      symbol: 'ETH', 
+      decimals: 18 
+    },
+    rpcUrls: [ZIRCUIT_RPC_URL],
+    blockExplorerUrls: [ZIRCUIT_EXPLORER_URL],
+  },
+  flow: {
+    chainId: FLOW_CHAIN_ID,
+    chainName: FLOW_CHAIN_NAME,
+    nativeCurrency: { 
+      name: 'Flow', 
+      symbol: 'FLOW', 
+      decimals: 18 
+    },
+    rpcUrls: [FLOW_RPC_URL],
+    blockExplorerUrls: [FLOW_EXPLORER_URL],
   }
 };
 
@@ -182,6 +218,54 @@ export const CHAIN_CONFIGS = {
       default: {
         name: 'WorldChain Explorer',
         url: WORLD_EXPLORER_URL,
+      },
+    },
+  },
+  zircuit: {
+    id: ZIRCUIT_CHAIN_ID_DECIMAL,
+    name: ZIRCUIT_CHAIN_NAME,
+    network: 'zircuit',
+    nativeCurrency: {
+      decimals: 18,
+      name: 'Ether',
+      symbol: 'ETH',
+    },
+    rpcUrls: {
+      default: {
+        http: [ZIRCUIT_RPC_URL],
+      },
+      public: {
+        http: [ZIRCUIT_RPC_URL],
+      },
+    },
+    blockExplorers: {
+      default: {
+        name: 'Zircuit Explorer',
+        url: ZIRCUIT_EXPLORER_URL,
+      },
+    },
+  },
+  flow: {
+    id: FLOW_CHAIN_ID_DECIMAL,
+    name: FLOW_CHAIN_NAME,
+    network: 'flow',
+    nativeCurrency: {
+      decimals: 18,
+      name: 'Flow',
+      symbol: 'FLOW',
+    },
+    rpcUrls: {
+      default: {
+        http: [FLOW_RPC_URL],
+      },
+      public: {
+        http: [FLOW_RPC_URL],
+      },
+    },
+    blockExplorers: {
+      default: {
+        name: 'Flow Explorer',
+        url: FLOW_EXPLORER_URL,
       },
     },
   }
