@@ -33,7 +33,7 @@ h1 {
 
 /* Стили для таблиц */
 .MuiTableContainer-root {
-  border-radius: 8px;
+  border-radius: 2px;
   overflow: hidden;
 }
 

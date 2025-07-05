@@ -66,7 +66,7 @@ const NavBar = ({ ThemeToggleButton }) => {
                 boxShadow: location.pathname === item.path
                   ? '0 0 16px 2px #7C4DFF33'
                   : 'none',
-                borderRadius: 3,
+                borderRadius: 2,
                 px: 3,
                 py: 1.2,
                 transition: 'all 0.2s',

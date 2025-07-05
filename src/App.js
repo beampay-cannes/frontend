@@ -40,7 +40,7 @@ const getDesignTokens = (mode) => ({
       secondary: mode === 'light' ? '#7C4DFF' : '#B39DDB',
     },
   },
-  shape: { borderRadius: 16 },
+  shape: { borderRadius: 3 },
   typography: {
     fontFamily: 'Inter, Roboto, Arial, sans-serif',
     h1: { fontWeight: 700 },
@@ -55,7 +55,7 @@ const getDesignTokens = (mode) => ({
     MuiButton: {
       styleOverrides: {
         root: {
-          borderRadius: 12,
+          borderRadius: 3,
           fontWeight: 600,
           boxShadow: '0 2px 16px 0 rgba(124,77,255,0.10)',
           transition: 'all 0.2s',
@@ -74,7 +74,7 @@ const getDesignTokens = (mode) => ({
     MuiCard: {
       styleOverrides: {
         root: {
-          borderRadius: 18,
+          borderRadius: 3,
           boxShadow: '0 4px 32px 0 rgba(124,77,255,0.10)',
         },
       },

@@ -46,7 +46,7 @@ const HomePage = () => {
           fontWeight: 700,
           background: '#fff',
           color: '#7C4DFF',
-          borderRadius: 999,
+          borderRadius: 3,
           textTransform: 'none',
           boxShadow: '0 0 32px 0 #7C4DFF22',
           transition: 'all 0.2s',

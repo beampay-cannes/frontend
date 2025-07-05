@@ -13,7 +13,6 @@ import {
   Payment as PaymentIcon,
   ShoppingCart as ShoppingCartIcon,
   Settings as SettingsIcon,
-  TrendingUp as TrendingUpIcon,
   Warning as WarningIcon
 } from '@mui/icons-material';
 import { getPaymentSettings, getNetworkInfo } from '../utils/paymentSettings';
@@ -89,7 +88,7 @@ const Dashboard = ({ ThemeToggleButton }) => {
               mb: 2
             }}
           >
-            Панель управления
+            Dashboard
           </Typography>
           <Typography 
             variant="h6" 
@@ -99,7 +98,7 @@ const Dashboard = ({ ThemeToggleButton }) => {
               letterSpacing: 1
             }}
           >
-            Управление вашим бизнесом
+            Manage your business
           </Typography>
         </Box>
 
@@ -112,9 +111,10 @@ const Dashboard = ({ ThemeToggleButton }) => {
                 background: 'rgba(255,255,255,0.05)',
                 backdropFilter: 'blur(20px)',
                 border: '1px solid rgba(255,255,255,0.1)',
-                borderRadius: 4,
-                p: 3,
+                borderRadius: 3,
+                p: 4,
                 textAlign: 'center',
+                cursor: 'pointer',
                 transition: 'all 0.3s ease',
                 '&:hover': {
                   transform: 'translateY(-4px)',
@@ -122,6 +122,7 @@ const Dashboard = ({ ThemeToggleButton }) => {
                   border: '1px solid rgba(124,77,255,0.3)'
                 }
               }}
+              onClick={() => navigate('/products')}
             >
               <Box sx={{ 
                 display: 'flex', 
@@ -160,7 +161,7 @@ const Dashboard = ({ ThemeToggleButton }) => {
                   letterSpacing: 0.5
                 }}
               >
-                Всего товаров
+                Total Products
               </Typography>
             </Paper>
           </Grid>
@@ -172,8 +173,8 @@ const Dashboard = ({ ThemeToggleButton }) => {
                 background: 'rgba(255,255,255,0.05)',
                 backdropFilter: 'blur(20px)',
                 border: '1px solid rgba(255,255,255,0.1)',
-                borderRadius: 4,
-                p: 3,
+                borderRadius: 3,
+                p: 4,
                 textAlign: 'center',
                 cursor: 'pointer',
                 transition: 'all 0.3s ease',
@@ -222,77 +223,7 @@ const Dashboard = ({ ThemeToggleButton }) => {
                   letterSpacing: 0.5
                 }}
               >
-                Заказов / {stats.totalOrders - stats.totalPayments} неоплаченных
-              </Typography>
-            </Paper>
-          </Grid>
-
-          <Grid item xs={12} sm={6} md={4}>
-            <Paper
-              elevation={0}
-              sx={{
-                background: 'rgba(255,255,255,0.05)',
-                backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(255,255,255,0.1)',
-                borderRadius: 4,
-                p: 3,
-                textAlign: 'center',
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  transform: 'translateY(-4px)',
-                  boxShadow: '0 8px 32px rgba(41,121,255,0.2)',
-                  border: '1px solid rgba(41,121,255,0.3)'
-                }
-              }}
-            >
-              <Box sx={{ 
-                display: 'flex', 
-                justifyContent: 'center', 
-                mb: 2,
-                p: 2,
-                borderRadius: '50%',
-                background: 'linear-gradient(135deg, rgba(41,121,255,0.2) 0%, rgba(124,77,255,0.2) 100%)',
-                width: 80,
-                height: 80,
-                mx: 'auto'
-              }}>
-                <TrendingUpIcon sx={{ 
-                  fontSize: 40, 
-                  color: '#2979FF',
-                  filter: 'drop-shadow(0 0 8px rgba(41,121,255,0.5))'
-                }} />
-              </Box>
-              <Typography 
-                variant="h3" 
-                component="div" 
-                sx={{ 
-                  fontWeight: 700,
-                  color: '#fff',
-                  mb: 1,
-                  textShadow: '0 0 16px rgba(41,121,255,0.5)'
-                }}
-              >
-                ₽{stats.totalPayments * 100}
-              </Typography>
-              <Typography 
-                variant="body1" 
-                sx={{ 
-                  color: 'rgba(255,255,255,0.7)',
-                  fontWeight: 500,
-                  letterSpacing: 0.5,
-                  mb: 1
-                }}
-              >
-                Общий доход
-              </Typography>
-              <Typography 
-                variant="body2" 
-                sx={{ 
-                  color: 'rgba(255,255,255,0.5)',
-                  fontSize: '0.8rem'
-                }}
-              >
-                Бейс: {stats.basePayments} | Эфириум: {stats.ethereumPayments}
+                Orders / {stats.totalOrders - stats.totalPayments} unpaid
               </Typography>
             </Paper>
           </Grid>
@@ -321,7 +252,7 @@ const Dashboard = ({ ThemeToggleButton }) => {
               }
             }}
           >
-            Создать товар
+            Create Product
           </Button>
         </Box>
 
@@ -333,7 +264,7 @@ const Dashboard = ({ ThemeToggleButton }) => {
               background: 'linear-gradient(135deg, rgba(124,77,255,0.1) 0%, rgba(0,229,255,0.1) 100%)',
               backdropFilter: 'blur(20px)',
               border: '1px solid rgba(124,77,255,0.2)',
-              borderRadius: 4,
+              borderRadius: 3,
               p: 4,
               mb: 6,
               position: 'relative',
@@ -367,7 +298,7 @@ const Dashboard = ({ ThemeToggleButton }) => {
                   letterSpacing: 0.5
                 }}
               >
-                Настройки платежей
+                Payment Settings
               </Typography>
             </Box>
             <Grid container spacing={3}>
@@ -381,7 +312,7 @@ const Dashboard = ({ ThemeToggleButton }) => {
                       fontWeight: 500
                     }}
                   >
-                    Сеть
+                    Network
                   </Typography>
                   <Typography 
                     variant="body1" 
@@ -391,7 +322,7 @@ const Dashboard = ({ ThemeToggleButton }) => {
                       background: 'rgba(124,77,255,0.2)',
                       px: 2,
                       py: 1,
-                      borderRadius: 2,
+                      borderRadius: 3,
                       display: 'inline-block'
                     }}
                   >
@@ -409,7 +340,7 @@ const Dashboard = ({ ThemeToggleButton }) => {
                       fontWeight: 500
                     }}
                   >
-                    Адрес кошелька
+                    Wallet Address
                   </Typography>
                   <Typography 
                     variant="body2" 
@@ -419,7 +350,7 @@ const Dashboard = ({ ThemeToggleButton }) => {
                       background: 'rgba(0,0,0,0.3)',
                       px: 2,
                       py: 1,
-                      borderRadius: 2,
+                      borderRadius: 3,
                       wordBreak: 'break-all'
                     }}
                   >
@@ -435,7 +366,7 @@ const Dashboard = ({ ThemeToggleButton }) => {
               sx={{
                 color: '#7C4DFF',
                 borderColor: '#7C4DFF',
-                borderRadius: 2,
+                borderRadius: 3,
                 px: 3,
                 py: 1,
                 fontWeight: 600,
@@ -447,7 +378,7 @@ const Dashboard = ({ ThemeToggleButton }) => {
                 }
               }}
             >
-              Изменить настройки
+              Change Settings
             </Button>
           </Paper>
         )}
@@ -459,7 +390,7 @@ const Dashboard = ({ ThemeToggleButton }) => {
               background: 'linear-gradient(135deg, rgba(255,152,0,0.1) 0%, rgba(255,87,34,0.1) 100%)',
               backdropFilter: 'blur(20px)',
               border: '1px solid rgba(255,152,0,0.3)',
-              borderRadius: 4,
+              borderRadius: 3,
               p: 4,
               mb: 6,
               position: 'relative',
@@ -493,7 +424,7 @@ const Dashboard = ({ ThemeToggleButton }) => {
                   letterSpacing: 0.5
                 }}
               >
-                Внимание: Настройки платежей не настроены
+                Warning: Payment settings not configured
               </Typography>
             </Box>
             <Typography 
@@ -504,7 +435,7 @@ const Dashboard = ({ ThemeToggleButton }) => {
                 lineHeight: 1.6
               }}
             >
-              Для приема платежей необходимо настроить сеть и адрес кошелька.
+              To receive payments, you need to configure the network and wallet address.
             </Typography>
             <Button
               variant="contained"
@@ -512,7 +443,7 @@ const Dashboard = ({ ThemeToggleButton }) => {
               onClick={() => navigate('/payment-settings')}
               sx={{
                 background: 'linear-gradient(90deg, #FF9800 0%, #FF5722 100%)',
-                borderRadius: 2,
+                borderRadius: 3,
                 px: 3,
                 py: 1,
                 fontWeight: 600,
@@ -524,7 +455,7 @@ const Dashboard = ({ ThemeToggleButton }) => {
                 }
               }}
             >
-              Настроить платежи
+              Configure Payments
             </Button>
           </Paper>
         )}
@@ -543,7 +474,7 @@ const Dashboard = ({ ThemeToggleButton }) => {
               textShadow: '0 0 16px rgba(124,77,255,0.3)'
             }}
           >
-            Последние товары
+            Recent Products
           </Typography>
           
           <Grid container spacing={4} justifyContent="center">
@@ -555,7 +486,7 @@ const Dashboard = ({ ThemeToggleButton }) => {
                     background: 'rgba(255,255,255,0.05)',
                     backdropFilter: 'blur(20px)',
                     border: '1px solid rgba(255,255,255,0.1)',
-                    borderRadius: 4,
+                    borderRadius: 3,
                     overflow: 'hidden',
                     transition: 'all 0.3s ease',
                     height: 420,
@@ -654,13 +585,13 @@ const Dashboard = ({ ThemeToggleButton }) => {
                 onClick={() => navigate('/products')}
                 sx={{
                   color: '#7C4DFF',
-                  borderColor: '#7C4DFF',
-                  borderRadius: 3,
-                  px: 4,
-                  py: 1.5,
-                  fontSize: '1.1rem',
-                  fontWeight: 600,
-                  letterSpacing: 0.5,
+                                  borderColor: '#7C4DFF',
+                borderRadius: 3,
+                px: 4,
+                py: 1.5,
+                fontSize: '1.1rem',
+                fontWeight: 600,
+                letterSpacing: 0.5,
                   '&:hover': {
                     borderColor: '#00E5FF',
                     color: '#00E5FF',
@@ -669,7 +600,7 @@ const Dashboard = ({ ThemeToggleButton }) => {
                   }
                 }}
               >
-                Все товары
+                All Products
               </Button>
             </Box>
           )}

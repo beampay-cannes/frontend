@@ -253,7 +253,7 @@ const PaymentSettings = () => {
                       alignItems: 'center', 
                       p: 1, 
                       bgcolor: 'grey.50', 
-                      borderRadius: 1,
+                      borderRadius: 3,
                       wordBreak: 'break-all'
                     }}>
                       <Typography variant="body2" sx={{ fontFamily: 'monospace', flex: 1 }}>

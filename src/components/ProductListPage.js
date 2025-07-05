@@ -4,16 +4,11 @@ import {
   Container,
   Typography,
   Grid,
-  Card,
-  CardContent,
-  CardMedia,
   Button,
   Box,
-  AppBar,
-  Toolbar,
-  IconButton
+  Paper
 } from '@mui/material';
-import { ArrowBack as ArrowBackIcon, Home as HomeIcon, Add as AddIcon } from '@mui/icons-material';
+import { Add as AddIcon } from '@mui/icons-material';
 
 const ProductListPage = () => {
   const navigate = useNavigate();
@@ -26,70 +21,223 @@ const ProductListPage = () => {
   }, []);
 
   return (
-    <>
-      <AppBar position="static">
-        <Toolbar>
-          <IconButton edge="start" color="inherit" onClick={() => navigate('/dashboard')} sx={{ mr: 2 }}>
-            <ArrowBackIcon />
-          </IconButton>
-          <IconButton color="inherit" onClick={() => navigate('/')} sx={{ mr: 1 }}>
-            <HomeIcon />
-          </IconButton>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            All Products
+    <Box sx={{
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%)',
+      pt: 8,
+      pb: 4
+    }}>
+      <Container maxWidth="lg">
+        <Box sx={{
+          mb: 6,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          textAlign: 'center'
+        }}>
+          <Typography
+            variant="h2"
+            component="h1"
+            gutterBottom
+            sx={{
+              fontWeight: 900,
+              letterSpacing: 2,
+              background: 'linear-gradient(90deg, #7C4DFF 0%, #00E5FF 50%, #2979FF 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              textShadow: '0 4px 32px rgba(124,77,255,0.3)',
+              mb: 2
+            }}
+          >
+            Все товары
           </Typography>
-          <Button color="inherit" startIcon={<AddIcon />} onClick={() => navigate('/create-product')}>
-            Create Product
+          <Typography
+            variant="h6"
+            sx={{
+              color: 'rgba(255,255,255,0.7)',
+              fontWeight: 300,
+              letterSpacing: 1
+            }}
+          >
+            Управляйте своим ассортиментом
+          </Typography>
+        </Box>
+
+        <Box sx={{ textAlign: 'center', mb: 6 }}>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => navigate('/create-product')}
+            sx={{
+              background: 'linear-gradient(90deg, #7C4DFF 0%, #00E5FF 100%)',
+              borderRadius: 3,
+              px: 4,
+              py: 1.5,
+              fontSize: '1.1rem',
+              fontWeight: 600,
+              letterSpacing: 0.5,
+              boxShadow: '0 4px 16px rgba(124,77,255,0.3)',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                transform: 'translateY(-2px)',
+                boxShadow: '0 8px 24px rgba(124,77,255,0.4)',
+                background: 'linear-gradient(90deg, #7C4DFF 0%, #00E5FF 100%)'
+              }
+            }}
+          >
+            Создать товар
           </Button>
-        </Toolbar>
-      </AppBar>
-      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom sx={{ textAlign: 'center' }}>
-          Product List
-        </Typography>
+        </Box>
+
         {products.length === 0 ? (
-          <Box sx={{ textAlign: 'center', py: 4 }}>
-            <Typography variant="h6" color="text.secondary">
-              No products found
-            </Typography>
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={() => navigate('/create-product')}
-              sx={{ mt: 2 }}
+          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 300 }}>
+            <Paper
+              elevation={0}
+              sx={{
+                background: 'rgba(255,255,255,0.05)',
+                backdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: 3,
+                p: 6,
+                textAlign: 'center',
+                maxWidth: 400
+              }}
             >
-              Create First Product
-            </Button>
+              <Typography variant="h5" sx={{ color: '#fff', mb: 2 }}>
+                Нет товаров
+              </Typography>
+              <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.7)', mb: 3 }}>
+                Добавьте свой первый товар, чтобы начать продажи
+              </Typography>
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={() => navigate('/create-product')}
+                sx={{
+                  background: 'linear-gradient(90deg, #7C4DFF 0%, #00E5FF 100%)',
+                  borderRadius: 3,
+                  px: 4,
+                  py: 1.5,
+                  fontSize: '1.1rem',
+                  fontWeight: 600,
+                  letterSpacing: 0.5,
+                  boxShadow: '0 4px 16px rgba(124,77,255,0.3)',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    transform: 'translateY(-2px)',
+                    boxShadow: '0 8px 24px rgba(124,77,255,0.4)',
+                    background: 'linear-gradient(90deg, #7C4DFF 0%, #00E5FF 100%)'
+                  }
+                }}
+              >
+                Создать первый товар
+              </Button>
+            </Paper>
           </Box>
         ) : (
-          <Grid container spacing={3} justifyContent="center">
-            {products.map((product, index) => (
-              <Grid item xs={12} sm={6} md={4} key={index} sx={{ display: 'flex', justifyContent: 'center' }}>
-                <Card>
-                  <CardMedia
-                    component="img"
-                    height="200"
-                    image={product.image || 'https://via.placeholder.com/300x200?text=No+Image'}
-                    alt={product.title}
-                  />
-                  <CardContent>
-                    <Typography gutterBottom variant="h6" component="div">
-                      {product.title}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                      {product.description}
-                    </Typography>
-                    <Typography variant="h6" color="primary">
-                      ₽{product.price}
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
-            ))}
+          <Grid container spacing={4} justifyContent="center">
+            {products.map((product, index) => {
+              let title = product.title;
+              let description = product.description;
+              if (title === 'Chair') title = 'Стул';
+              if (title === 'Table') title = 'Стол';
+              if (title === 'Sofa') title = 'Диван';
+              if (description === 'Blue chair') description = 'Синий стул';
+              if (description === 'Wooden table') description = 'Деревянный стол';
+              if (description === 'Great sofa') description = 'Отличный диван';
+              return (
+                <Grid item xs={12} sm={6} md={4} key={index}>
+                  <Paper
+                    elevation={0}
+                    sx={{
+                      background: 'linear-gradient(135deg, rgba(124,77,255,0.10) 0%, rgba(0,229,255,0.08) 100%)',
+                      backdropFilter: 'blur(24px)',
+                      border: '2px solid rgba(124,77,255,0.25)',
+                      borderRadius: 3,
+                      overflow: 'hidden',
+                      transition: 'all 0.3s ease',
+                      height: 420,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      boxShadow: '0 0 32px 0 rgba(124,77,255,0.15), 0 4px 32px 0 rgba(0,229,255,0.10)',
+                      '&:hover': {
+                        transform: 'translateY(-8px) scale(1.03)',
+                        boxShadow: '0 0 48px 8px #7C4DFF66, 0 8px 40px 0 #00E5FF33',
+                        border: '2.5px solid #7C4DFF',
+                        borderRadius: 3
+                      }
+                    }}
+                  >
+                    <Box sx={{
+                      width: '100%',
+                      height: 200,
+                      overflow: 'hidden',
+                      position: 'relative'
+                    }}>
+                      <img
+                        src={product.image || 'https://via.placeholder.com/300x200?text=Нет+фото'}
+                        alt={title}
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                          display: 'block'
+                        }}
+                      />
+                    </Box>
+                    <Box sx={{
+                      p: 3,
+                      flexGrow: 1,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between'
+                    }}>
+                      <Box>
+                        <Typography
+                          variant="h6"
+                          component="div"
+                          sx={{
+                            textAlign: 'center',
+                            color: '#fff',
+                            fontWeight: 600,
+                            mb: 1,
+                            lineHeight: 1.3
+                          }}
+                        >
+                          {title}
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            color: 'rgba(255,255,255,0.7)',
+                            textAlign: 'center',
+                            mb: 2,
+                            lineHeight: 1.5
+                          }}
+                        >
+                          {description}
+                        </Typography>
+                      </Box>
+                      <Typography
+                        variant="h5"
+                        sx={{
+                          color: '#7C4DFF',
+                          fontWeight: 700,
+                          textAlign: 'center',
+                          textShadow: '0 0 8px rgba(124,77,255,0.5)'
+                        }}
+                      >
+                        ₽{product.price}
+                      </Typography>
+                    </Box>
+                  </Paper>
+                </Grid>
+              );
+            })}
           </Grid>
         )}
       </Container>
-    </>
+    </Box>
   );
 };
 
