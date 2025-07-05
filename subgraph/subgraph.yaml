@@ -1,0 +1,24 @@
+specVersion: 0.0.5
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: SimpleEventContract
+    network: base
+    source:
+      address: "0xf9397f60c1a45c572132e9e0da89f5e7e71da2ef"
+      abi: SimpleEventContract
+      startBlock: 32400000
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - DataEvent
+      abis:
+        - name: SimpleEventContract
+          file: ./abis/SimpleEventContract.json
+      eventHandlers:
+        - event: DataEmitted(indexed bytes32)
+          handler: handleDataEmitted
+      file: ./src/mapping.ts 

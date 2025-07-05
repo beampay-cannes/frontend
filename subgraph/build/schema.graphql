@@ -1,0 +1,9 @@
+type DataEvent @entity(immutable: false) {
+  id: ID!
+  data: Bytes!
+  orderId: BigInt!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+  contractAddress: Bytes!
+} 
