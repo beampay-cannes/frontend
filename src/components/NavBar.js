@@ -4,8 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 
 const menuItems = [
   { label: 'Dashboard', path: '/dashboard' },
-  { label: 'Sellers', path: '/sellers' },
-  { label: 'Create Seller', path: '/create-seller' },
+  { label: 'Settings', path: 'http://localhost:3000/payment-settings', external: true },
 ];
 
 const NavBar = ({ ThemeToggleButton }) => {
@@ -54,7 +53,7 @@ const NavBar = ({ ThemeToggleButton }) => {
           {menuItems.map((item) => (
             <Button
               key={item.path}
-              onClick={() => navigate(item.path)}
+              onClick={() => item.external ? window.open(item.path, '_self') : navigate(item.path)}
               variant="text"
               sx={{
                 color: location.pathname === item.path ? '#7C4DFF' : '#fff',
