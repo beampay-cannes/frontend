@@ -3,7 +3,6 @@ import {
   createWalletClient, 
   custom, 
   zeroAddress,
-  parseEther 
 } from 'viem';
 import { 
   Implementation,
@@ -70,9 +69,7 @@ async function authorize7702Delegation(walletClient, networkName) {
   const contractAddress = environment.implementations.EIP7702StatelessDeleGatorImpl;
 
   console.log(`Authorizing EIP-7702 delegation for ${networkName}...`);
-  
   const [account] = await walletClient.requestAddresses();
-  
   const authorization = await walletClient.signAuthorization({
     account, 
     contractAddress,
@@ -86,8 +83,6 @@ async function authorize7702Delegation(walletClient, networkName) {
 // Отправка авторизации через EIP-7702 транзакцию
 async function submitAuthorization(walletClient, authorization) {
   console.log('Submitting EIP-7702 authorization...');
-  
-  const [account] = await walletClient.requestAddresses();
   
   const hash = await walletClient.sendTransaction({ 
     authorizationList: [authorization], 

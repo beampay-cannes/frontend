@@ -33,8 +33,7 @@ import { NETWORK_CONFIGS } from '../config/rpc';
 import { 
   getPaymentSettings, 
   savePaymentSettings, 
-  isValidWalletAddress,
-  getNetworkInfo as getNetworkInfoUtil 
+  isValidWalletAddress
 } from '../utils/paymentSettings';
 
 const PaymentSettings = () => {

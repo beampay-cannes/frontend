@@ -4,23 +4,17 @@ import {
   Container,
   Typography,
   Grid,
-  Card,
-  CardContent,
   Button,
   Box,
-  AppBar,
-  Toolbar,
-  IconButton,
-  Badge,
-  Stack,
-  Tooltip
+  Paper
 } from '@mui/material';
 import {
   Add as AddIcon,
   Payment as PaymentIcon,
   ShoppingCart as ShoppingCartIcon,
-  Home as HomeIcon,
   Settings as SettingsIcon,
+  TrendingUp as TrendingUpIcon,
+  Warning as WarningIcon
 } from '@mui/icons-material';
 import { getPaymentSettings, getNetworkInfo } from '../utils/paymentSettings';
 
@@ -66,232 +60,622 @@ const Dashboard = ({ ThemeToggleButton }) => {
   }, []);
 
   return (
-    <>
-      <AppBar position="static" elevation={0} sx={{
-        background: 'linear-gradient(90deg, #7C4DFF 0%, #2979FF 100%)',
-        boxShadow: '0 2px 16px 0 rgba(124,77,255,0.10)',
-        mb: 4
-      }}>
-        <Toolbar>
-          <IconButton
-            edge="start"
-            color="inherit"
-            onClick={() => navigate('/')}
-            sx={{ mr: 2 }}
-          >
-            <HomeIcon />
-          </IconButton>
-          <Typography
-            variant="h5"
-            component="div"
-            sx={{
-              flexGrow: 1,
+    <Box sx={{ 
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%)',
+      pt: 8,
+      pb: 4
+    }}>
+      <Container maxWidth="lg">
+        {/* Header Section */}
+        <Box sx={{ 
+          mb: 6, 
+          display: 'flex', 
+          flexDirection: 'column', 
+          alignItems: 'center',
+          textAlign: 'center'
+        }}>
+          <Typography 
+            variant="h2" 
+            component="h1" 
+            gutterBottom 
+            sx={{ 
               fontWeight: 900,
-              letterSpacing: 1.5,
-              background: 'linear-gradient(90deg, #7C4DFF 0%, #00E5FF 100%)',
+              letterSpacing: 2,
+              background: 'linear-gradient(90deg, #7C4DFF 0%, #00E5FF 50%, #2979FF 100%)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
-              textShadow: '0 2px 16px #7C4DFF44',
-              userSelect: 'none',
-              fontFamily: 'Inter, Roboto, Arial, sans-serif',
+              textShadow: '0 4px 32px rgba(124,77,255,0.3)',
+              mb: 2
             }}
           >
-            BeamPay
+            Панель управления
           </Typography>
-          <Stack direction="row" spacing={1} alignItems="center">
-            <Tooltip title="Платежи">
-              <IconButton
-                color="inherit"
-                onClick={() => navigate('/payments')}
-                sx={{
-                  boxShadow: '0 0 8px 2px #00E5FF88',
-                  borderRadius: 2,
-                  transition: 'box-shadow 0.2s',
-                  '&:hover': { boxShadow: '0 0 16px 4px #00E5FF' }
-                }}
-              >
-                <Badge badgeContent={stats.totalPayments} color="secondary">
-                  <PaymentIcon />
-                </Badge>
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Настройки платежей">
-              <IconButton
-                color="inherit"
-                onClick={() => navigate('/payment-settings')}
-                sx={{
-                  boxShadow: '0 0 8px 2px #7C4DFF88',
-                  borderRadius: 2,
-                  transition: 'box-shadow 0.2s',
-                  '&:hover': { boxShadow: '0 0 16px 4px #7C4DFF' }
-                }}
-              >
-                <SettingsIcon />
-              </IconButton>
-            </Tooltip>
-            {ThemeToggleButton && <ThemeToggleButton />}
-          </Stack>
-        </Toolbar>
-      </AppBar>
+          <Typography 
+            variant="h6" 
+            sx={{ 
+              color: 'rgba(255,255,255,0.7)',
+              fontWeight: 300,
+              letterSpacing: 1
+            }}
+          >
+            Управление вашим бизнесом
+          </Typography>
+        </Box>
 
-      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-        <Box sx={{ mb: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <Typography variant="h4" component="h1" gutterBottom sx={{ textAlign: 'center' }}>
-            Dashboard
-          </Typography>
-          <Grid container spacing={3} sx={{ mb: 4, justifyContent: 'center', maxWidth: 900 }}>
-            <Grid item xs={12} sm={6} md={4} sx={{ display: 'flex', justifyContent: 'center' }}>
-              <Card>
-                <CardContent>
-                  <Typography color="textSecondary" gutterBottom>
-                    Total Products
-                  </Typography>
-                  <Typography variant="h3" component="div">
-                    {stats.totalProducts}
-                  </Typography>
-                  <ShoppingCartIcon sx={{ fontSize: 40, color: 'primary.main' }} />
-                </CardContent>
-              </Card>
-            </Grid>
-            <Grid item xs={12} sm={6} md={4} sx={{ display: 'flex', justifyContent: 'center' }}>
-              <Card
-                sx={{ cursor: 'pointer' }}
-                onClick={() => navigate('/orders')}
+        {/* Stats Cards */}
+        <Grid container spacing={4} sx={{ mb: 6, justifyContent: 'center' }}>
+          <Grid item xs={12} sm={6} md={4}>
+            <Paper
+              elevation={0}
+              sx={{
+                background: 'rgba(255,255,255,0.05)',
+                backdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: 4,
+                p: 3,
+                textAlign: 'center',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: '0 8px 32px rgba(124,77,255,0.2)',
+                  border: '1px solid rgba(124,77,255,0.3)'
+                }
+              }}
+            >
+              <Box sx={{ 
+                display: 'flex', 
+                justifyContent: 'center', 
+                mb: 2,
+                p: 2,
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, rgba(124,77,255,0.2) 0%, rgba(0,229,255,0.2) 100%)',
+                width: 80,
+                height: 80,
+                mx: 'auto'
+              }}>
+                <ShoppingCartIcon sx={{ 
+                  fontSize: 40, 
+                  color: '#7C4DFF',
+                  filter: 'drop-shadow(0 0 8px rgba(124,77,255,0.5))'
+                }} />
+              </Box>
+              <Typography 
+                variant="h3" 
+                component="div" 
+                sx={{ 
+                  fontWeight: 700,
+                  color: '#fff',
+                  mb: 1,
+                  textShadow: '0 0 16px rgba(124,77,255,0.5)'
+                }}
               >
-                <CardContent>
-                  <Typography color="textSecondary" gutterBottom>
-                    Orders / Unpaid Orders
-                  </Typography>
-                  <Typography variant="h3" component="div">
-                    {stats.totalOrders} / {stats.totalOrders - stats.totalPayments}
-                  </Typography>
-                  <PaymentIcon sx={{ fontSize: 40, color: 'secondary.main' }} />
-                </CardContent>
-              </Card>
-            </Grid>
-            <Grid item xs={12} sm={6} md={4} sx={{ display: 'flex', justifyContent: 'center' }}>
-              <Card>
-                <CardContent>
-                  <Typography color="textSecondary" gutterBottom>
-                    Total Revenue
-                  </Typography>
-                  <Typography variant="h3" component="div">
-                    ₽{stats.totalPayments * 100}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                    Base: {stats.basePayments} | ETH: {stats.ethereumPayments}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
+                {stats.totalProducts}
+              </Typography>
+              <Typography 
+                variant="body1" 
+                sx={{ 
+                  color: 'rgba(255,255,255,0.7)',
+                  fontWeight: 500,
+                  letterSpacing: 0.5
+                }}
+              >
+                Всего товаров
+              </Typography>
+            </Paper>
           </Grid>
+
+          <Grid item xs={12} sm={6} md={4}>
+            <Paper
+              elevation={0}
+              sx={{
+                background: 'rgba(255,255,255,0.05)',
+                backdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: 4,
+                p: 3,
+                textAlign: 'center',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: '0 8px 32px rgba(0,229,255,0.2)',
+                  border: '1px solid rgba(0,229,255,0.3)'
+                }
+              }}
+              onClick={() => navigate('/orders')}
+            >
+              <Box sx={{ 
+                display: 'flex', 
+                justifyContent: 'center', 
+                mb: 2,
+                p: 2,
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, rgba(0,229,255,0.2) 0%, rgba(41,121,255,0.2) 100%)',
+                width: 80,
+                height: 80,
+                mx: 'auto'
+              }}>
+                <PaymentIcon sx={{ 
+                  fontSize: 40, 
+                  color: '#00E5FF',
+                  filter: 'drop-shadow(0 0 8px rgba(0,229,255,0.5))'
+                }} />
+              </Box>
+              <Typography 
+                variant="h3" 
+                component="div" 
+                sx={{ 
+                  fontWeight: 700,
+                  color: '#fff',
+                  mb: 1,
+                  textShadow: '0 0 16px rgba(0,229,255,0.5)'
+                }}
+              >
+                {stats.totalOrders}
+              </Typography>
+              <Typography 
+                variant="body1" 
+                sx={{ 
+                  color: 'rgba(255,255,255,0.7)',
+                  fontWeight: 500,
+                  letterSpacing: 0.5
+                }}
+              >
+                Заказов / {stats.totalOrders - stats.totalPayments} неоплаченных
+              </Typography>
+            </Paper>
+          </Grid>
+
+          <Grid item xs={12} sm={6} md={4}>
+            <Paper
+              elevation={0}
+              sx={{
+                background: 'rgba(255,255,255,0.05)',
+                backdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: 4,
+                p: 3,
+                textAlign: 'center',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: '0 8px 32px rgba(41,121,255,0.2)',
+                  border: '1px solid rgba(41,121,255,0.3)'
+                }
+              }}
+            >
+              <Box sx={{ 
+                display: 'flex', 
+                justifyContent: 'center', 
+                mb: 2,
+                p: 2,
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, rgba(41,121,255,0.2) 0%, rgba(124,77,255,0.2) 100%)',
+                width: 80,
+                height: 80,
+                mx: 'auto'
+              }}>
+                <TrendingUpIcon sx={{ 
+                  fontSize: 40, 
+                  color: '#2979FF',
+                  filter: 'drop-shadow(0 0 8px rgba(41,121,255,0.5))'
+                }} />
+              </Box>
+              <Typography 
+                variant="h3" 
+                component="div" 
+                sx={{ 
+                  fontWeight: 700,
+                  color: '#fff',
+                  mb: 1,
+                  textShadow: '0 0 16px rgba(41,121,255,0.5)'
+                }}
+              >
+                ₽{stats.totalPayments * 100}
+              </Typography>
+              <Typography 
+                variant="body1" 
+                sx={{ 
+                  color: 'rgba(255,255,255,0.7)',
+                  fontWeight: 500,
+                  letterSpacing: 0.5,
+                  mb: 1
+                }}
+              >
+                Общий доход
+              </Typography>
+              <Typography 
+                variant="body2" 
+                sx={{ 
+                  color: 'rgba(255,255,255,0.5)',
+                  fontSize: '0.8rem'
+                }}
+              >
+                Бейс: {stats.basePayments} | Эфириум: {stats.ethereumPayments}
+              </Typography>
+            </Paper>
+          </Grid>
+        </Grid>
+
+        {/* Action Button */}
+        <Box sx={{ textAlign: 'center', mb: 6 }}>
           <Button
             variant="contained"
             startIcon={<AddIcon />}
             onClick={() => navigate('/create-product')}
-            sx={{ mb: 2 }}
+            sx={{
+              background: 'linear-gradient(90deg, #7C4DFF 0%, #00E5FF 100%)',
+              borderRadius: 3,
+              px: 4,
+              py: 1.5,
+              fontSize: '1.1rem',
+              fontWeight: 600,
+              letterSpacing: 0.5,
+              boxShadow: '0 4px 16px rgba(124,77,255,0.3)',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                transform: 'translateY(-2px)',
+                boxShadow: '0 8px 24px rgba(124,77,255,0.4)',
+                background: 'linear-gradient(90deg, #7C4DFF 0%, #00E5FF 100%)'
+              }
+            }}
           >
-            Create Product
+            Создать товар
           </Button>
         </Box>
 
-        {/* Карточка с настройками платежей */}
+        {/* Payment Settings Card */}
         {paymentSettings && (
-          <Card sx={{ mb: 4, bgcolor: 'primary.light', color: 'white' }}>
-            <CardContent>
-              <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
-                <SettingsIcon sx={{ mr: 1 }} />
+          <Paper
+            elevation={0}
+            sx={{
+              background: 'linear-gradient(135deg, rgba(124,77,255,0.1) 0%, rgba(0,229,255,0.1) 100%)',
+              backdropFilter: 'blur(20px)',
+              border: '1px solid rgba(124,77,255,0.2)',
+              borderRadius: 4,
+              p: 4,
+              mb: 6,
+              position: 'relative',
+              overflow: 'hidden',
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: '2px',
+                background: 'linear-gradient(90deg, #7C4DFF 0%, #00E5FF 100%)',
+                boxShadow: '0 0 16px rgba(124,77,255,0.5)'
+              }
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+              <Box sx={{ 
+                p: 1.5,
+                borderRadius: '50%',
+                background: 'rgba(124,77,255,0.2)',
+                mr: 2
+              }}>
+                <SettingsIcon sx={{ color: '#7C4DFF', fontSize: 28 }} />
+              </Box>
+              <Typography 
+                variant="h5" 
+                sx={{ 
+                  color: '#fff',
+                  fontWeight: 600,
+                  letterSpacing: 0.5
+                }}
+              >
                 Настройки платежей
               </Typography>
-              <Typography variant="body1" sx={{ mb: 1 }}>
-                Сеть: <strong>{getNetworkInfo(paymentSettings.network).name}</strong>
-              </Typography>
-              <Typography variant="body2" sx={{ fontFamily: 'monospace', mb: 2 }}>
-                Адрес: {paymentSettings.walletAddress}
-              </Typography>
-              <Button
-                variant="outlined"
-                size="small"
-                onClick={() => navigate('/payment-settings')}
-                sx={{ color: 'white', borderColor: 'white', '&:hover': { borderColor: 'white', bgcolor: 'rgba(255,255,255,0.1)' } }}
-              >
-                Изменить настройки
-              </Button>
-            </CardContent>
-          </Card>
+            </Box>
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={6}>
+                <Box sx={{ mb: 2 }}>
+                  <Typography 
+                    variant="body2" 
+                    sx={{ 
+                      color: 'rgba(255,255,255,0.6)',
+                      mb: 0.5,
+                      fontWeight: 500
+                    }}
+                  >
+                    Сеть
+                  </Typography>
+                  <Typography 
+                    variant="body1" 
+                    sx={{ 
+                      color: '#fff',
+                      fontWeight: 600,
+                      background: 'rgba(124,77,255,0.2)',
+                      px: 2,
+                      py: 1,
+                      borderRadius: 2,
+                      display: 'inline-block'
+                    }}
+                  >
+                    {getNetworkInfo(paymentSettings.network).name}
+                  </Typography>
+                </Box>
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <Box sx={{ mb: 2 }}>
+                  <Typography 
+                    variant="body2" 
+                    sx={{ 
+                      color: 'rgba(255,255,255,0.6)',
+                      mb: 0.5,
+                      fontWeight: 500
+                    }}
+                  >
+                    Адрес кошелька
+                  </Typography>
+                  <Typography 
+                    variant="body2" 
+                    sx={{ 
+                      fontFamily: 'monospace',
+                      color: '#fff',
+                      background: 'rgba(0,0,0,0.3)',
+                      px: 2,
+                      py: 1,
+                      borderRadius: 2,
+                      wordBreak: 'break-all'
+                    }}
+                  >
+                    {paymentSettings.walletAddress}
+                  </Typography>
+                </Box>
+              </Grid>
+            </Grid>
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={() => navigate('/payment-settings')}
+              sx={{
+                color: '#7C4DFF',
+                borderColor: '#7C4DFF',
+                borderRadius: 2,
+                px: 3,
+                py: 1,
+                fontWeight: 600,
+                '&:hover': {
+                  borderColor: '#00E5FF',
+                  color: '#00E5FF',
+                  background: 'rgba(0,229,255,0.1)',
+                  boxShadow: '0 0 16px rgba(0,229,255,0.3)'
+                }
+              }}
+            >
+              Изменить настройки
+            </Button>
+          </Paper>
         )}
 
         {!paymentSettings && (
-          <Card sx={{ mb: 4, bgcolor: 'warning.light', color: 'white' }}>
-            <CardContent>
-              <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
-                <SettingsIcon sx={{ mr: 1 }} />
+          <Paper
+            elevation={0}
+            sx={{
+              background: 'linear-gradient(135deg, rgba(255,152,0,0.1) 0%, rgba(255,87,34,0.1) 100%)',
+              backdropFilter: 'blur(20px)',
+              border: '1px solid rgba(255,152,0,0.3)',
+              borderRadius: 4,
+              p: 4,
+              mb: 6,
+              position: 'relative',
+              overflow: 'hidden',
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: '2px',
+                background: 'linear-gradient(90deg, #FF9800 0%, #FF5722 100%)',
+                boxShadow: '0 0 16px rgba(255,152,0,0.5)'
+              }
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+              <Box sx={{ 
+                p: 1.5,
+                borderRadius: '50%',
+                background: 'rgba(255,152,0,0.2)',
+                mr: 2
+              }}>
+                <WarningIcon sx={{ color: '#FF9800', fontSize: 28 }} />
+              </Box>
+              <Typography 
+                variant="h5" 
+                sx={{ 
+                  color: '#fff',
+                  fontWeight: 600,
+                  letterSpacing: 0.5
+                }}
+              >
                 Внимание: Настройки платежей не настроены
               </Typography>
-              <Typography variant="body1" sx={{ mb: 2 }}>
-                Для приема платежей необходимо настроить сеть и адрес кошелька.
-              </Typography>
-              <Button
-                variant="contained"
-                size="small"
-                onClick={() => navigate('/payment-settings')}
-                sx={{ bgcolor: 'white', color: 'warning.main', '&:hover': { bgcolor: 'grey.100' } }}
-              >
-                Настроить платежи
-              </Button>
-            </CardContent>
-          </Card>
+            </Box>
+            <Typography 
+              variant="body1" 
+              sx={{ 
+                color: 'rgba(255,255,255,0.8)',
+                mb: 3,
+                lineHeight: 1.6
+              }}
+            >
+              Для приема платежей необходимо настроить сеть и адрес кошелька.
+            </Typography>
+            <Button
+              variant="contained"
+              size="small"
+              onClick={() => navigate('/payment-settings')}
+              sx={{
+                background: 'linear-gradient(90deg, #FF9800 0%, #FF5722 100%)',
+                borderRadius: 2,
+                px: 3,
+                py: 1,
+                fontWeight: 600,
+                boxShadow: '0 4px 16px rgba(255,152,0,0.3)',
+                '&:hover': {
+                  transform: 'translateY(-1px)',
+                  boxShadow: '0 6px 20px rgba(255,152,0,0.4)',
+                  background: 'linear-gradient(90deg, #FF9800 0%, #FF5722 100%)'
+                }
+              }}
+            >
+              Настроить платежи
+            </Button>
+          </Paper>
         )}
 
-        <Typography variant="h5" gutterBottom sx={{ textAlign: 'center' }}>
-          Recent Products
-        </Typography>
-        <>
-          <Grid container spacing={3} justifyContent="center">
+        {/* Recent Products Section */}
+        <Box sx={{ mb: 6 }}>
+          <Typography 
+            variant="h4" 
+            gutterBottom 
+            sx={{ 
+              textAlign: 'center',
+              color: '#fff',
+              fontWeight: 700,
+              letterSpacing: 1,
+              mb: 4,
+              textShadow: '0 0 16px rgba(124,77,255,0.3)'
+            }}
+          >
+            Последние товары
+          </Typography>
+          
+          <Grid container spacing={4} justifyContent="center">
             {stats.recentProducts.map((product, index) => (
-              <Grid item xs={12} sm={6} md={4} key={index} sx={{ display: 'flex', justifyContent: 'center' }}>
-                <Card sx={{ width: 320, height: 420, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                  <Box sx={{ width: '100%', height: 200, overflow: 'hidden' }}>
+              <Grid item xs={12} sm={6} md={4} key={index}>
+                <Paper
+                  elevation={0}
+                  sx={{
+                    background: 'rgba(255,255,255,0.05)',
+                    backdropFilter: 'blur(20px)',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: 4,
+                    overflow: 'hidden',
+                    transition: 'all 0.3s ease',
+                    height: 420,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    '&:hover': {
+                      transform: 'translateY(-4px)',
+                      boxShadow: '0 8px 32px rgba(124,77,255,0.2)',
+                      border: '1px solid rgba(124,77,255,0.3)'
+                    }
+                  }}
+                >
+                  <Box sx={{ 
+                    width: '100%', 
+                    height: 200, 
+                    overflow: 'hidden',
+                    position: 'relative'
+                  }}>
                     <img
                       src={product.image}
                       alt={product.title}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                      style={{ 
+                        width: '100%', 
+                        height: '100%', 
+                        objectFit: 'cover', 
+                        display: 'block' 
+                      }}
                     />
+                    <Box sx={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      background: 'linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.3) 100%)',
+                      opacity: 0,
+                      transition: 'opacity 0.3s ease',
+                      '&:hover': { opacity: 1 }
+                    }} />
                   </Box>
-                  <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', alignItems: 'center' }}>
-                    <Typography gutterBottom variant="h5" component="div" sx={{ textAlign: 'center' }}>
-                      {product.title}
-                    </Typography>
-                    <Typography variant="body1" color="text.secondary" sx={{ mb: 2, textAlign: 'center' }}>
-                      {product.description}
-                    </Typography>
-                    <Typography variant="h6" color="primary" sx={{ mt: 'auto' }}>
+                  <Box sx={{ 
+                    p: 3, 
+                    flexGrow: 1, 
+                    display: 'flex', 
+                    flexDirection: 'column',
+                    justifyContent: 'space-between'
+                  }}>
+                    <Box>
+                      <Typography 
+                        variant="h6" 
+                        component="div" 
+                        sx={{ 
+                          textAlign: 'center',
+                          color: '#fff',
+                          fontWeight: 600,
+                          mb: 1,
+                          lineHeight: 1.3
+                        }}
+                      >
+                        {product.title}
+                      </Typography>
+                      <Typography 
+                        variant="body2" 
+                        sx={{ 
+                          color: 'rgba(255,255,255,0.7)',
+                          textAlign: 'center',
+                          mb: 2,
+                          lineHeight: 1.5
+                        }}
+                      >
+                        {product.description}
+                      </Typography>
+                    </Box>
+                    <Typography 
+                      variant="h5" 
+                      sx={{ 
+                        color: '#7C4DFF',
+                        fontWeight: 700,
+                        textAlign: 'center',
+                        textShadow: '0 0 8px rgba(124,77,255,0.5)'
+                      }}
+                    >
                       ₽{product.price}
                     </Typography>
-                  </CardContent>
-                </Card>
+                  </Box>
+                </Paper>
               </Grid>
             ))}
           </Grid>
-          <Box sx={{ textAlign: 'center', mt: 4 }}>
-            <Button
-              variant="outlined"
-              size="large"
-              onClick={() => navigate('/products')}
-              disabled={stats.totalProducts === 0}
-            >
-              Full Product List
-            </Button>
-          </Box>
-        </>
-
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          <Grid item xs={12}>
-            {/* ScannerControl убран, теперь сканер доступен только по ссылке */}
-          </Grid>
-        </Grid>
+          
+          {stats.totalProducts > 0 && (
+            <Box sx={{ textAlign: 'center', mt: 4 }}>
+              <Button
+                variant="outlined"
+                size="large"
+                onClick={() => navigate('/products')}
+                sx={{
+                  color: '#7C4DFF',
+                  borderColor: '#7C4DFF',
+                  borderRadius: 3,
+                  px: 4,
+                  py: 1.5,
+                  fontSize: '1.1rem',
+                  fontWeight: 600,
+                  letterSpacing: 0.5,
+                  '&:hover': {
+                    borderColor: '#00E5FF',
+                    color: '#00E5FF',
+                    background: 'rgba(0,229,255,0.1)',
+                    boxShadow: '0 0 16px rgba(0,229,255,0.3)'
+                  }
+                }}
+              >
+                Все товары
+              </Button>
+            </Box>
+          )}
+        </Box>
       </Container>
-    </>
+    </Box>
   );
 };
 
