@@ -28,6 +28,14 @@ const NETWORKS = {
     rpc: 'https://base-mainnet.g.alchemy.com/v2/hFeeeDTV-4tpKPrCml4oxMtL4IW6u7a_',
     bundler: 'https://bundler.base.org',
     contract: '0xf9397f60c1a45c572132e9e0da89f5e7e71da2ef'
+  },
+  worldchain: {
+    id: 14,
+    name: 'worldchain',
+    chainId: '0xe',
+    rpc: 'https://worldchain.world',
+    bundler: 'https://bundler.worldchain.world',
+    contract: '0x50c8d8db0711bd17fc21e1e111327580ae41a8ef' // Временный адрес, нужно заменить на реальный
   }
 };
 

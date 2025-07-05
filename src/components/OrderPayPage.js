@@ -30,9 +30,20 @@ const getContractAddress = (network) => {
 
 
 const USDC_ADDRESS = '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48';
+const CCTP_V2_ADDRESS = '0x28b5a0e9C621a5BadaA536219b3a228C8168cf5d';
 const commitSelector = '0x64fc31b3';
 const revealSelector = '0x97bf794b';
 const TO_ADDRESS = '0x87555C010f5137141ca13b42855d90a108887005'; // Recipient address
+
+// Функция для получения домена CCTP V2 в зависимости от сети
+const getCCTPDomain = (network) => {
+  const domains = {
+    ethereum: 0,    // Ethereum domain
+    base: 6,        // Base domain
+    worldchain: 14  // World Chain domain
+  };
+  return domains[network] || 0; // По умолчанию Ethereum
+};
 
 const OrderPayPage = () => {
   const { orderId } = useParams();
@@ -93,7 +104,7 @@ const OrderPayPage = () => {
 
     // Проверяем, поддерживается ли текущая сеть
     if (!currentNetwork || currentNetwork === 'unknown') {
-      setSignError('Please switch to a supported network (Base or Ethereum) in MetaMask');
+      setSignError('Please switch to a supported network (Base, Ethereum, or World Chain) in MetaMask');
       return;
     }
 
@@ -148,7 +159,7 @@ const OrderPayPage = () => {
       return;
     }
     if (!currentNetwork || currentNetwork === 'unknown') {
-      setSignError('Please switch to a supported network (Base or Ethereum) in MetaMask');
+      setSignError('Please switch to a supported network (Base, Ethereum, or World Chain) in MetaMask');
       return;
     }
     if (!order) {
@@ -168,6 +179,31 @@ const OrderPayPage = () => {
         return;
       }
       const DECLARED_AMOUNT = window.BigInt(Math.round(amount * 1e6));
+      
+      // USDC approval calldata (approve CCTP V2 contract to spend USDC)
+      const approveCallData = '0x095ea7b3' + // approve function selector
+        '000000000000000000000000' + CCTP_V2_ADDRESS.slice(2) + // spender (CCTP V2)
+        DECLARED_AMOUNT.toString(16).padStart(64, '0'); // amount
+      
+      // CCTP V2 depositForBurn calldata
+      // function depositForBurn(uint256 amount, uint32 destinationDomain, bytes32 mintRecipient, address burnToken, bytes32 destinationCaller, uint256 maxFee, uint32 minFinalityThreshold)
+      const cctpDomain = getCCTPDomain(currentNetwork);
+      const destinationDomain = '0x' + cctpDomain.toString(16).padStart(8, '0'); // Правильный домен для текущей сети
+      const mintRecipient = '0x000000000000000000000000' + account.address.slice(2); // recipient address as bytes32
+      const burnToken = '000000000000000000000000' + USDC_ADDRESS.slice(2); // USDC token address
+      const destinationCaller = '0x0000000000000000000000000000000000000000000000000000000000000000'; // zero address as bytes32
+      const maxFee = '0x0000000000000000000000000000000000000000000000000000000000000000'; // 0 max fee
+      const minFinalityThreshold = '0x00000001'; // 1 block finality
+      
+      const depositForBurnCallData = '0x2c2cb6c3' + // depositForBurn function selector
+        DECLARED_AMOUNT.toString(16).padStart(64, '0') + // amount
+        destinationDomain + // destinationDomain
+        mintRecipient + // mintRecipient
+        burnToken + // burnToken
+        destinationCaller + // destinationCaller
+        maxFee + // maxFee
+        minFinalityThreshold; // minFinalityThreshold
+      
       // commit calldata
       const commitCallData = commitSelector +
         '000000000000000000000000' + TO_ADDRESS.slice(2) +
@@ -178,12 +214,8 @@ const OrderPayPage = () => {
         '000000000000000000000000' + TO_ADDRESS.slice(2) +
         DECLARED_AMOUNT.toString(16).padStart(64, '0') +
         PAYMENT_ID.slice(2);
-      // transfer calldata (1 USDC for demo)
-      const transferCallData = '0xa9059cbb' +
-        '000000000000000000000000' + TO_ADDRESS.slice(2) +
-        DECLARED_AMOUNT.toString(16).padStart(64, '0');
       const contractAddress = getContractAddress(currentNetwork);
-      setSignResult('Sending EIP-7702 batch call...');
+      setSignResult('Sending USDC approval and CCTP V2 depositForBurn transaction...');
       const res = await window.ethereum.request({
         method: 'wallet_sendCalls',
         params: [{
@@ -193,13 +225,18 @@ const OrderPayPage = () => {
           atomicRequired: true,
           calls: [
             {
-              to: contractAddress,
-              data: commitCallData,
+              to: USDC_ADDRESS,
+              data: approveCallData,
               value: '0x0',
             },
             {
-              to: USDC_ADDRESS,
-              data: transferCallData,
+              to: CCTP_V2_ADDRESS,
+              data: depositForBurnCallData,
+              value: '0x0',
+            },
+            {
+              to: contractAddress,
+              data: commitCallData,
               value: '0x0',
             },
             {
@@ -334,7 +371,7 @@ const OrderPayPage = () => {
     }
 
     if (!currentNetwork || currentNetwork === 'unknown') {
-      setSignError('Пожалуйста, переключитесь на поддерживаемую сеть (Base или Ethereum) в Ambire Wallet');
+      setSignError('Пожалуйста, переключитесь на поддерживаемую сеть (Base, Ethereum или World Chain) в Ambire Wallet');
       return;
     }
 
@@ -474,7 +511,7 @@ const OrderPayPage = () => {
           
           {currentNetwork === 'unknown' && (
             <Typography variant="body2" color="warning.main" sx={{ mb: 2 }}>
-              Please switch to Base or Ethereum network in MetaMask
+              Please switch to Base, Ethereum, or World Chain network in MetaMask
             </Typography>
           )}
 
@@ -497,7 +534,7 @@ const OrderPayPage = () => {
             disabled={!currentNetwork || currentNetwork === 'unknown' || isTransactionPending}
             sx={{ mb: 2 }}
           >
-            {isTransactionPending ? 'Transaction Pending...' : 'Pay with MetaMask (EIP-7702 batch)'}
+            {isTransactionPending ? 'Transaction Pending...' : 'Pay with MetaMask (USDC + CCTP V2)'}
           </Button>
           
           <Button

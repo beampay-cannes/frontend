@@ -18,6 +18,7 @@ import {
   Payment as PaymentIcon,
   ShoppingCart as ShoppingCartIcon,
   Home as HomeIcon,
+  Settings as SettingsIcon,
 } from '@mui/icons-material';
 
 const Dashboard = () => {
@@ -30,6 +31,7 @@ const Dashboard = () => {
     ethereumPayments: 0,
     recentProducts: []
   });
+  const [paymentSettings, setPaymentSettings] = useState(null);
 
   useEffect(() => {
     // Загружаем статистику
@@ -52,6 +54,12 @@ const Dashboard = () => {
             });
           });
       });
+
+    // Загружаем настройки платежей
+    const saved = localStorage.getItem('paymentSettings');
+    if (saved) {
+      setPaymentSettings(JSON.parse(saved));
+    }
   }, []);
 
   return (
@@ -73,6 +81,9 @@ const Dashboard = () => {
             <Badge badgeContent={stats.totalPayments} color="secondary">
               <PaymentIcon />
             </Badge>
+          </IconButton>
+          <IconButton color="inherit" onClick={() => navigate('/payment-settings')}>
+            <SettingsIcon />
           </IconButton>
         </Toolbar>
       </AppBar>
@@ -137,6 +148,56 @@ const Dashboard = () => {
             Create Product
           </Button>
         </Box>
+
+        {/* Карточка с настройками платежей */}
+        {paymentSettings && (
+          <Card sx={{ mb: 4, bgcolor: 'primary.light', color: 'white' }}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
+                <SettingsIcon sx={{ mr: 1 }} />
+                Настройки платежей
+              </Typography>
+              <Typography variant="body1" sx={{ mb: 1 }}>
+                Сеть: <strong>{paymentSettings.network === 'ethereum' ? 'Ethereum' : 
+                               paymentSettings.network === 'base' ? 'Base' : 
+                               paymentSettings.network === 'worldchain' ? 'World Chain' : 'Неизвестно'}</strong>
+              </Typography>
+              <Typography variant="body2" sx={{ fontFamily: 'monospace', mb: 2 }}>
+                Адрес: {paymentSettings.walletAddress}
+              </Typography>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={() => navigate('/payment-settings')}
+                sx={{ color: 'white', borderColor: 'white', '&:hover': { borderColor: 'white', bgcolor: 'rgba(255,255,255,0.1)' } }}
+              >
+                Изменить настройки
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {!paymentSettings && (
+          <Card sx={{ mb: 4, bgcolor: 'warning.light', color: 'white' }}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
+                <SettingsIcon sx={{ mr: 1 }} />
+                Внимание: Настройки платежей не настроены
+              </Typography>
+              <Typography variant="body1" sx={{ mb: 2 }}>
+                Для приема платежей необходимо настроить сеть и адрес кошелька.
+              </Typography>
+              <Button
+                variant="contained"
+                size="small"
+                onClick={() => navigate('/payment-settings')}
+                sx={{ bgcolor: 'white', color: 'warning.main', '&:hover': { bgcolor: 'grey.100' } }}
+              >
+                Настроить платежи
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
         <Typography variant="h5" gutterBottom sx={{ textAlign: 'center' }}>
           Recent Products

@@ -11,6 +11,7 @@ import ProductPage from './components/ProductPage';
 import OrderListPage from './components/OrderListPage';
 import OrderPayPage from './components/OrderPayPage';
 import MobilePayPage from './components/MobilePayPage';
+import PaymentSettings from './components/PaymentSettings';
 import './App.css';
 
 const theme = createTheme({
@@ -40,6 +41,7 @@ function App() {
             <Route path="/orders" element={<OrderListPage />} />
             <Route path="/order/:orderId/pay" element={<OrderPayPage />} />
             <Route path="/order/:orderId/pay/mobile" element={<MobilePayPage />} />
+            <Route path="/payment-settings" element={<PaymentSettings />} />
           </Routes>
         </div>
       </Router>

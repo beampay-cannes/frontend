@@ -12,6 +12,13 @@ export const ETH_CHAIN_ID_DECIMAL = parseInt(process.env.REACT_APP_ETH_CHAIN_ID_
 export const ETH_CHAIN_NAME = process.env.REACT_APP_ETH_CHAIN_NAME || 'Ethereum';
 export const ETH_EXPLORER_URL = process.env.REACT_APP_ETH_EXPLORER_URL || 'https://etherscan.io';
 
+// World Chain Configuration
+export const WORLD_RPC_URL = process.env.REACT_APP_WORLD_RPC_URL || 'https://worldchain.world';
+export const WORLD_CHAIN_ID = process.env.REACT_APP_WORLD_CHAIN_ID || '0xe';
+export const WORLD_CHAIN_ID_DECIMAL = parseInt(process.env.REACT_APP_WORLD_CHAIN_ID_DECIMAL) || 14;
+export const WORLD_CHAIN_NAME = process.env.REACT_APP_WORLD_CHAIN_NAME || 'World Chain';
+export const WORLD_EXPLORER_URL = process.env.REACT_APP_WORLD_EXPLORER_URL || 'https://explorer.worldchain.world';
+
 // Network configurations for MetaMask
 export const NETWORK_CONFIGS = {
   base: {
@@ -35,6 +42,17 @@ export const NETWORK_CONFIGS = {
     },
     rpcUrls: [ETH_RPC_URL],
     blockExplorerUrls: [ETH_EXPLORER_URL],
+  },
+  worldchain: {
+    chainId: WORLD_CHAIN_ID,
+    chainName: WORLD_CHAIN_NAME,
+    nativeCurrency: { 
+      name: 'Ether', 
+      symbol: 'ETH', 
+      decimals: 18 
+    },
+    rpcUrls: [WORLD_RPC_URL],
+    blockExplorerUrls: [WORLD_EXPLORER_URL],
   }
 };
 
@@ -85,6 +103,30 @@ export const CHAIN_CONFIGS = {
       default: {
         name: 'Etherscan',
         url: ETH_EXPLORER_URL,
+      },
+    },
+  },
+  worldchain: {
+    id: WORLD_CHAIN_ID_DECIMAL,
+    name: WORLD_CHAIN_NAME,
+    network: 'worldchain',
+    nativeCurrency: {
+      decimals: 18,
+      name: 'Ether',
+      symbol: 'ETH',
+    },
+    rpcUrls: {
+      default: {
+        http: [WORLD_RPC_URL],
+      },
+      public: {
+        http: [WORLD_RPC_URL],
+      },
+    },
+    blockExplorers: {
+      default: {
+        name: 'WorldChain Explorer',
+        url: WORLD_EXPLORER_URL,
       },
     },
   }

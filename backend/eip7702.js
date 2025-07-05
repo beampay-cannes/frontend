@@ -26,6 +26,13 @@ const NETWORKS = {
     rpc: 'https://base-mainnet.g.alchemy.com/v2/hFeeeDTV-4tpKPrCml4oxMtL4IW6u7a_',
     bundler: 'https://bundler.base.org',
     contract: '0xf9397f60c1a45c572132e9e0da89f5e7e71da2ef'
+  },
+  worldchain: {
+    id: 14,
+    name: 'worldchain',
+    rpc: 'https://worldchain.world',
+    bundler: 'https://bundler.worldchain.world',
+    contract: '0x50c8d8db0711bd17fc21e1e111327580ae41a8ef' // Временный адрес, нужно заменить на реальный
   }
 };
 
@@ -48,7 +55,8 @@ function createClients(networkName) {
 async function getGasFees(networkName) {
   const baseFees = {
     ethereum: { maxFeePerGas: 20000000000n, maxPriorityFeePerGas: 2000000000n },
-    base: { maxFeePerGas: 1000000000n, maxPriorityFeePerGas: 100000000n }
+    base: { maxFeePerGas: 1000000000n, maxPriorityFeePerGas: 100000000n },
+    worldchain: { maxFeePerGas: 1000000000n, maxPriorityFeePerGas: 100000000n }
   };
   
   return baseFees[networkName] || baseFees.ethereum;
