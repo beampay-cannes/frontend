@@ -1,7 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-// const fetch = require('node-fetch'); // The Graph не используется
-const { createPublicClient, http } = require('viem');
+const { ethers } = require('ethers');
 const CHAINS = require('./chains.config');
 
 // Base Network Configuration (отключено)
@@ -17,9 +16,7 @@ const LAST_SYNCED_BLOCK_PATH = path.join(__dirname, 'last_synced_block.json');
 const EVENT_TOPIC = 'bd08606ff9a1cf52e08c39be01403b1ac0f930e1be6edbba825cfa3ffa9f3249';
 
 // Только Ethereum клиент
-const ethClient = createPublicClient({
-  transport: http(ETH_ALCHEMY_RPC)
-});
+const ethProvider = new ethers.JsonRpcProvider(ETH_ALCHEMY_RPC);
 
 // Чтение последнего засинканого блока из файла
 function getLastSyncedBlockFromFile(enabledChains) {
@@ -48,15 +45,15 @@ function saveLastSyncedBlock(blocks) {
 }
 
 // Получение событий из ноды для конкретной сети
-async function getEventsFromNode(client, contractAddress, eventTopic, fromBlock, toBlock) {
+async function getEventsFromNode(provider, contractAddress, eventTopic, fromBlock, toBlock) {
   try {
-    const logs = await client.getLogs({
+    const logs = await provider.getLogs({
       address: contractAddress,
-      fromBlock: BigInt(fromBlock),
-      toBlock: BigInt(toBlock),
+      fromBlock: fromBlock,
+      toBlock: toBlock,
       topics: [eventTopic]
     });
-    return logs.map(log => BigInt(log.topics[1]).toString());
+    return logs.map(log => ethers.getBigInt(log.topics[1]).toString());
   } catch (error) {
     console.error('Error fetching logs from node:', error);
     return [];
@@ -64,20 +61,20 @@ async function getEventsFromNode(client, contractAddress, eventTopic, fromBlock,
 }
 
 // Обновление заказов через ноду для конкретной сети
-async function updateOrdersFromNode(client, contractAddress, eventTopic, networkName, lastSyncedBlock) {
+async function updateOrdersFromNode(provider, contractAddress, eventTopic, networkName, lastSyncedBlock) {
   try {
     if (lastSyncedBlock === null) {
       console.log(`No last synced block found for ${networkName}, skipping...`);
       return lastSyncedBlock;
     }
-    const latestBlock = Number(await client.getBlockNumber());
+    const latestBlock = Number(await provider.getBlockNumber());
     if (latestBlock <= lastSyncedBlock) {
       console.log(`No new blocks on ${networkName}. Last synced: ${lastSyncedBlock}, Latest: ${latestBlock} (0 blocks)`);
       return lastSyncedBlock;
     }
     const blocksProcessed = latestBlock - lastSyncedBlock;
     console.log(`Fetching events from ${networkName} block ${lastSyncedBlock + 1} to ${latestBlock} (${blocksProcessed} blocks)`);
-    const paidOrderIds = await getEventsFromNode(client, contractAddress, eventTopic, lastSyncedBlock + 1, latestBlock);
+    const paidOrderIds = await getEventsFromNode(provider, contractAddress, eventTopic, lastSyncedBlock + 1, latestBlock);
     if (paidOrderIds.length > 0) {
       console.log(`Found ${paidOrderIds.length} new paid orders on ${networkName}:`, paidOrderIds);
       const ordersData = fs.readFileSync(ORDERS_PATH, 'utf8');
@@ -119,8 +116,8 @@ async function updateOrders() {
     console.log('First run - initializing enabled networks from current blocks...');
     const newBlocks = {};
     for (const chain of enabledChains) {
-      const client = createPublicClient({ transport: http(chain.rpc) });
-      const latestBlock = Number(await client.getBlockNumber());
+      const provider = new ethers.JsonRpcProvider(chain.rpc);
+      const latestBlock = Number(await provider.getBlockNumber());
       newBlocks[chain.name] = latestBlock;
       console.log(`Initialized ${chain.name} starting block: ${latestBlock}`);
     }
@@ -132,9 +129,9 @@ async function updateOrders() {
   console.log('Updating orders from enabled networks...');
   const newBlocks = {};
   for (const chain of enabledChains) {
-    const client = createPublicClient({ transport: http(chain.rpc) });
+    const provider = new ethers.JsonRpcProvider(chain.rpc);
     const newBlock = await updateOrdersFromNode(
-      client,
+      provider,
       chain.contract,
       chain.eventTopic,
       chain.name,

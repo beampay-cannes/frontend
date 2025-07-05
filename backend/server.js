@@ -186,12 +186,16 @@ app.get('/api/seller', (req, res) => {
   fs.readFile(sellerPath, 'utf8', (err, data) => {
     if (err) {
       // Если файла нет, создаём с пустым адресом
-      const defaultSeller = { walletAddress: '' };
+      const defaultSeller = { walletAddress: '', chain_id: '0' };
       fs.writeFileSync(sellerPath, JSON.stringify(defaultSeller, null, 2));
       return res.json(defaultSeller);
     }
     try {
       const seller = JSON.parse(data);
+      // Убеждаемся, что chain_id есть
+      if (!seller.chain_id) {
+        seller.chain_id = '0';
+      }
       res.json(seller);
     } catch (e) {
       res.status(500).json({ error: 'Failed to parse seller.json' });
@@ -200,11 +204,14 @@ app.get('/api/seller', (req, res) => {
 });
 
 app.post('/api/seller', (req, res) => {
-  const { walletAddress } = req.body;
+  const { walletAddress, chain_id } = req.body;
   if (!walletAddress) {
     return res.status(400).json({ error: 'walletAddress is required' });
   }
-  const seller = { walletAddress };
+  const seller = { 
+    walletAddress,
+    chain_id: chain_id || '0' // По умолчанию Ethereum (Domain 0)
+  };
   fs.writeFile(sellerPath, JSON.stringify(seller, null, 2), (err) => {
     if (err) return res.status(500).json({ error: 'Failed to write seller.json' });
     res.json({ success: true, seller });
