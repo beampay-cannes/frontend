@@ -184,20 +184,20 @@ const ProductListPage = () => {
                             component="div"
                             sx={{ textAlign: 'center', color: '#fff', fontWeight: 600, mb: 1, lineHeight: 1.3 }}
                           >
-                            {title}
+                            {String(title || '')}
                           </Typography>
                           <Typography
                             variant="body2"
                             sx={{ color: 'rgba(255,255,255,0.7)', textAlign: 'center', mb: 2, lineHeight: 1.5 }}
                           >
-                            {description}
+                            {String(description || '')}
                           </Typography>
                         </Box>
                         <Typography
                           variant="h5"
                           sx={{ color: '#7C4DFF', fontWeight: 700, textAlign: 'center', textShadow: '0 0 8px rgba(124,77,255,0.5)' }}
                         >
-                          {product.price} USDC
+                          {String(product.price || '')} USDC
                         </Typography>
                       </Box>
                     </Paper>

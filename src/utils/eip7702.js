@@ -161,6 +161,21 @@ const USDC_ABI = [
 ];
 
 const CCTP_V2_ABI = [
+  // {
+  //   "inputs": [
+  //     { "internalType": "uint256", "name": "amount", "type": "uint256" },
+  //     { "internalType": "uint32", "name": "destinationDomain", "type": "uint32" },
+  //     { "internalType": "bytes32", "name": "mintRecipient", "type": "bytes32" },
+  //     { "internalType": "address", "name": "burnToken", "type": "address" },
+  //     { "internalType": "bytes32", "name": "destinationCaller", "type": "bytes32" },
+  //     { "internalType": "uint256", "name": "maxFee", "type": "uint256" },
+  //     { "internalType": "uint32", "name": "minFinalityThreshold", "type": "uint32" }
+  //   ],
+  //   "name": "depositForBurn",
+  //   "outputs": [],
+  //   "stateMutability": "nonpayable",
+  //   "type": "function"
+  // },
   {
     "inputs": [
       { "internalType": "uint256", "name": "amount", "type": "uint256" },
@@ -169,9 +184,10 @@ const CCTP_V2_ABI = [
       { "internalType": "address", "name": "burnToken", "type": "address" },
       { "internalType": "bytes32", "name": "destinationCaller", "type": "bytes32" },
       { "internalType": "uint256", "name": "maxFee", "type": "uint256" },
-      { "internalType": "uint32", "name": "minFinalityThreshold", "type": "uint32" }
+      { "internalType": "uint32", "name": "minFinalityThreshold", "type": "uint32" },
+      { "internalType": "bytes", "name": "hookData", "type": "bytes" }
     ],
-    "name": "depositForBurn",
+    "name": "depositForBurnWithHook",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -215,7 +231,7 @@ export async function sendApproveTransaction(networkName, orderId, orderData) {
     const mintRecipient = ethers.zeroPadValue(orderData.wallet, 32);
     // Правильно форматируем destinationCaller как bytes32 (32 байта нулей)
     const destinationCaller = ethers.zeroPadValue('0x', 32);
-    const maxFee = ethers.parseUnits('0.1', 6); // 0.1 USDC
+    const maxFee = ethers.parseUnits('0.01', 6); // 0.01 USDC
     const minFinalityThreshold = 100;
 
     console.log('Transaction parameters:');
@@ -241,8 +257,11 @@ export async function sendApproveTransaction(networkName, orderId, orderData) {
       amount
     ]);
 
+    // Создаем hookData с transactionId
+    const hookData = ethers.toUtf8Bytes(`order_${orderId}`);
+    
     // Проверяем параметры перед кодированием
-    console.log('Parameters for depositForBurn:');
+    console.log('Parameters for depositForBurnWithHook:');
     console.log('1. amount (uint256):', amount);
     console.log('2. destinationDomain (uint32):', destinationDomain);
     console.log('3. mintRecipient (bytes32):', mintRecipient);
@@ -250,16 +269,18 @@ export async function sendApproveTransaction(networkName, orderId, orderData) {
     console.log('5. destinationCaller (bytes32):', destinationCaller);
     console.log('6. maxFee (uint256):', maxFee.toString());
     console.log('7. minFinalityThreshold (uint32):', minFinalityThreshold);
+    console.log('8. hookData (bytes):', ethers.hexlify(hookData));
 
-    // Кодируем depositForBurn call data
-    const depositForBurnCallData = cctpInterface.encodeFunctionData('depositForBurn', [
+    // Кодируем depositForBurnWithHook call data
+    const depositForBurnCallData = cctpInterface.encodeFunctionData('depositForBurnWithHook', [
       amount,
       destinationDomain,
       mintRecipient,
       USDC_ADDRESS,
       destinationCaller,
       maxFee,
-      minFinalityThreshold
+      minFinalityThreshold,
+      hookData
     ]);
 
     console.log('Encoded call data:');
@@ -279,9 +300,12 @@ export async function sendApproveTransaction(networkName, orderId, orderData) {
 
     console.log("SendCalls Response:", res);
 
+    // Извлекаем хеш транзакции из ответа
+    const txHash = typeof res === 'string' ? res : res.hash || res.transactionHash || res;
+
     return {
       success: true,
-      transactionHash: res,
+      transactionHash: String(txHash),
       network: networkName,
       orderId,
       type: 'approve',
@@ -334,7 +358,7 @@ export async function sendDepositForBurnTransaction(networkName, orderId, orderD
     const mintRecipient = ethers.zeroPadValue(orderData.wallet, 32);
     // Правильно форматируем destinationCaller как bytes32 (32 байта нулей)
     const destinationCaller = ethers.zeroPadValue('0x', 32);
-    const maxFee = ethers.parseUnits('0.1', 6); // 0.1 USDC
+    const maxFee = ethers.parseUnits('0.01', 6); // 0.01 USDC
     const minFinalityThreshold = 100;
 
     console.log('DepositForBurn parameters:');
@@ -350,8 +374,11 @@ export async function sendDepositForBurnTransaction(networkName, orderId, orderD
     // Создаем интерфейс для кодирования
     const cctpInterface = new ethers.Interface(CCTP_V2_ABI);
 
+    // Создаем hookData с transactionId
+    const hookData = ethers.toUtf8Bytes(`order_${orderId}`);
+    
     // Проверяем параметры перед кодированием
-    console.log('Parameters for depositForBurn:');
+    console.log('Parameters for depositForBurnWithHook:');
     console.log('1. amount (uint256):', amount);
     console.log('2. destinationDomain (uint32):', destinationDomain);
     console.log('3. mintRecipient (bytes32):', mintRecipient);
@@ -359,19 +386,21 @@ export async function sendDepositForBurnTransaction(networkName, orderId, orderD
     console.log('5. destinationCaller (bytes32):', destinationCaller);
     console.log('6. maxFee (uint256):', maxFee.toString());
     console.log('7. minFinalityThreshold (uint32):', minFinalityThreshold);
+    console.log('8. hookData (bytes):', ethers.hexlify(hookData));
 
     // Получаем правильный адрес TokenMessengerV2 для текущей сети
     const tokenMessengerAddress = getTokenMessengerAddress(networkName);
     
-    // Кодируем depositForBurn call data
-    const depositForBurnCallData = cctpInterface.encodeFunctionData('depositForBurn', [
+    // Кодируем depositForBurnWithHook call data
+    const depositForBurnCallData = cctpInterface.encodeFunctionData('depositForBurnWithHook', [
       amount,
       destinationDomain,
       mintRecipient,
       USDC_ADDRESS,
       destinationCaller,
       maxFee,
-      minFinalityThreshold
+      minFinalityThreshold,
+      hookData
     ]);
 
     console.log('Encoded depositForBurn call data:', depositForBurnCallData);
@@ -389,9 +418,12 @@ export async function sendDepositForBurnTransaction(networkName, orderId, orderD
 
     console.log("DepositForBurn Response:", res);
 
+    // Извлекаем хеш транзакции из ответа
+    const txHash = typeof res === 'string' ? res : res.hash || res.transactionHash || res;
+
     return {
       success: true,
-      transactionHash: res,
+      transactionHash: String(txHash),
       network: networkName,
       orderId,
       type: 'depositForBurn',
@@ -443,7 +475,7 @@ export async function createEIP7702Transaction(networkName, orderId, orderData) 
       : getCCTPDomain(networkName);
     const mintRecipient = ethers.zeroPadValue(orderData.wallet, 32);
     const destinationCaller = ethers.zeroPadValue('0x', 32);
-    const maxFee = ethers.parseUnits('0.1', 6); // 0.1 USDC
+    const maxFee = ethers.parseUnits('0.01', 6); // 0.01 USDC
     const minFinalityThreshold = 100;
 
     console.log('Transaction parameters:');
@@ -459,25 +491,31 @@ export async function createEIP7702Transaction(networkName, orderId, orderData) 
     const usdcInterface = new ethers.Interface(USDC_ABI);
     const cctpInterface = new ethers.Interface(CCTP_V2_ABI);
 
+    // Создаем hookData с transactionId
+    const hookData = ethers.toUtf8Bytes(`order_${orderId}`);
+    console.log('HookData:', ethers.hexlify(hookData));
+
     const approveCallData = usdcInterface.encodeFunctionData('approve', [
       getTokenMessengerAddress(networkName),
       amount
     ]);
 
-    const depositForBurnCallData = cctpInterface.encodeFunctionData('depositForBurn', [
+    const depositForBurnCallData = cctpInterface.encodeFunctionData('depositForBurnWithHook', [
       amount,
       destinationDomain,
       mintRecipient,
       USDC_ADDRESS,
       destinationCaller,
       maxFee,
-      minFinalityThreshold
+      minFinalityThreshold,
+      hookData
     ]);
 
     console.log('Approve call data:', approveCallData);
     console.log('DepositForBurn call data:', depositForBurnCallData);
 
     // Batch вызов через wallet_sendCalls
+    console.log('📤 SENDING WALLET_SENDCALLS REQUEST...');
     const res = await window.ethereum.request({
       method: 'wallet_sendCalls',
       params: [{
@@ -500,11 +538,170 @@ export async function createEIP7702Transaction(networkName, orderId, orderData) 
       }]
     });
 
-    console.log('SendCalls Response:', res);
+    console.log('🔥 METAMASK RESPONSE - ПОЛНЫЙ ВЫВОД:');
+    console.log('📋 Response Raw:', res);
+    console.log('📋 Response Type:', typeof res);
+    console.log('📋 Response Constructor:', res?.constructor?.name);
+    console.log('📋 Response Keys:', Object.keys(res || {}));
+    console.log('📋 Response Values:', Object.values(res || {}));
+    console.log('📋 Response JSON:', JSON.stringify(res, null, 2));
+    console.log('📋 Response String:', String(res));
+    console.log('📋 Response ToString:', res?.toString?.());
+    
+    // Проверяем все возможные поля
+    console.log('🔍 CHECKING ALL POSSIBLE FIELDS:');
+    console.log('- res.id:', res?.id);
+    console.log('- res.hash:', res?.hash);
+    console.log('- res.transactionHash:', res?.transactionHash);
+    console.log('- res.txHash:', res?.txHash);
+    console.log('- res.bundleId:', res?.bundleId);
+    console.log('- res.result:', res?.result);
+    console.log('- res.data:', res?.data);
+    console.log('- res.value:', res?.value);
+    console.log('- res.receipt:', res?.receipt);
+    console.log('- res.transaction:', res?.transaction);
+    console.log('- res.transactions:', res?.transactions);
+    console.log('- res.calls:', res?.calls);
+    console.log('- res.status:', res?.status);
+    console.log('- res.success:', res?.success);
+    
+    // Если есть вложенные объекты, тоже выводим
+    if (res?.result && typeof res.result === 'object') {
+      console.log('🔍 NESTED RESULT OBJECT:');
+      console.log('- result keys:', Object.keys(res.result));
+      console.log('- result values:', Object.values(res.result));
+      console.log('- result JSON:', JSON.stringify(res.result, null, 2));
+    }
+    
+    if (res?.data && typeof res.data === 'object') {
+      console.log('🔍 NESTED DATA OBJECT:');
+      console.log('- data keys:', Object.keys(res.data));
+      console.log('- data values:', Object.values(res.data));
+      console.log('- data JSON:', JSON.stringify(res.data, null, 2));
+    }
+    
+    if (res?.transactions && Array.isArray(res.transactions)) {
+      console.log('🔍 TRANSACTIONS ARRAY:');
+      res.transactions.forEach((tx, i) => {
+        console.log(`- Transaction ${i}:`, tx);
+        console.log(`- Transaction ${i} keys:`, Object.keys(tx || {}));
+        console.log(`- Transaction ${i} JSON:`, JSON.stringify(tx, null, 2));
+      });
+    }
+
+    // EIP-7702 возвращает bundle ID, а не transaction hash
+    // Нужно дождаться выполнения батча и получить реальный хеш
+    const bundleId = res.id || res;
+    
+    console.log('⚠️  EIP-7702 Bundle ID (not tx hash):', bundleId);
+    
+    // Попробуем дождаться выполнения батча и получить реальный хеш
+    let actualTxHash = null;
+    
+    try {
+      console.log('🔍 Trying to get actual transaction hash from bundle...');
+      
+      // Ждем немного чтобы батч выполнился
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      
+      // Попробуем получить статус батча
+      console.log('📤 SENDING WALLET_GETBUNDLESTATUS REQUEST...');
+      const bundleStatus = await window.ethereum.request({
+        method: 'wallet_getBundleStatus', 
+        params: [bundleId]
+      });
+      
+      console.log('🔥 BUNDLE STATUS RESPONSE - ПОЛНЫЙ ВЫВОД:');
+      console.log('📋 Bundle Status Raw:', bundleStatus);
+      console.log('📋 Bundle Status Type:', typeof bundleStatus);
+      console.log('📋 Bundle Status Constructor:', bundleStatus?.constructor?.name);
+      console.log('📋 Bundle Status Keys:', Object.keys(bundleStatus || {}));
+      console.log('📋 Bundle Status Values:', Object.values(bundleStatus || {}));
+      console.log('📋 Bundle Status JSON:', JSON.stringify(bundleStatus, null, 2));
+      console.log('📋 Bundle Status String:', String(bundleStatus));
+      console.log('📋 Bundle Status ToString:', bundleStatus?.toString?.());
+      
+      // Проверяем все возможные поля
+      console.log('🔍 CHECKING ALL BUNDLE STATUS FIELDS:');
+      console.log('- bundleStatus.id:', bundleStatus?.id);
+      console.log('- bundleStatus.hash:', bundleStatus?.hash);
+      console.log('- bundleStatus.transactionHash:', bundleStatus?.transactionHash);
+      console.log('- bundleStatus.txHash:', bundleStatus?.txHash);
+      console.log('- bundleStatus.bundleId:', bundleStatus?.bundleId);
+      console.log('- bundleStatus.result:', bundleStatus?.result);
+      console.log('- bundleStatus.data:', bundleStatus?.data);
+      console.log('- bundleStatus.value:', bundleStatus?.value);
+      console.log('- bundleStatus.receipt:', bundleStatus?.receipt);
+      console.log('- bundleStatus.transaction:', bundleStatus?.transaction);
+      console.log('- bundleStatus.transactions:', bundleStatus?.transactions);
+      console.log('- bundleStatus.calls:', bundleStatus?.calls);
+      console.log('- bundleStatus.status:', bundleStatus?.status);
+      console.log('- bundleStatus.success:', bundleStatus?.success);
+      console.log('- bundleStatus.receipts:', bundleStatus?.receipts);
+      console.log('- bundleStatus.hashes:', bundleStatus?.hashes);
+      console.log('- bundleStatus.results:', bundleStatus?.results);
+      
+      // Если есть массив транзакций, детально выводим каждую
+      if (bundleStatus?.transactions && Array.isArray(bundleStatus.transactions)) {
+        console.log('🔍 BUNDLE TRANSACTIONS ARRAY:');
+        bundleStatus.transactions.forEach((tx, i) => {
+          console.log(`📋 Transaction ${i} Raw:`, tx);
+          console.log(`📋 Transaction ${i} Type:`, typeof tx);
+          console.log(`📋 Transaction ${i} Keys:`, Object.keys(tx || {}));
+          console.log(`📋 Transaction ${i} Values:`, Object.values(tx || {}));
+          console.log(`📋 Transaction ${i} JSON:`, JSON.stringify(tx, null, 2));
+          console.log(`📋 Transaction ${i} String:`, String(tx));
+          
+          // Проверяем все возможные поля хеша
+          console.log(`🔍 Transaction ${i} Hash Fields:`);
+          console.log(`- tx.hash:`, tx?.hash);
+          console.log(`- tx.transactionHash:`, tx?.transactionHash);
+          console.log(`- tx.txHash:`, tx?.txHash);
+          console.log(`- tx.id:`, tx?.id);
+          console.log(`- tx.result:`, tx?.result);
+          console.log(`- tx.receipt:`, tx?.receipt);
+          console.log(`- tx.receipt?.transactionHash:`, tx?.receipt?.transactionHash);
+          console.log(`- tx.receipt?.hash:`, tx?.receipt?.hash);
+        });
+      }
+      
+      // Если есть массив результатов, выводим их тоже
+      if (bundleStatus?.results && Array.isArray(bundleStatus.results)) {
+        console.log('🔍 BUNDLE RESULTS ARRAY:');
+        bundleStatus.results.forEach((result, i) => {
+          console.log(`📋 Result ${i}:`, result);
+          console.log(`📋 Result ${i} JSON:`, JSON.stringify(result, null, 2));
+        });
+      }
+      
+      // Если есть массив хешей, выводим их
+      if (bundleStatus?.hashes && Array.isArray(bundleStatus.hashes)) {
+        console.log('🔍 BUNDLE HASHES ARRAY:');
+        bundleStatus.hashes.forEach((hash, i) => {
+          console.log(`📋 Hash ${i}:`, hash);
+        });
+      }
+      
+      if (bundleStatus && bundleStatus.transactions && bundleStatus.transactions.length > 0) {
+        // Берем хеш последней транзакции (depositForBurn)
+        const lastTx = bundleStatus.transactions[bundleStatus.transactions.length - 1];
+        actualTxHash = lastTx.hash || lastTx.transactionHash || lastTx;
+        console.log('✅ Found actual transaction hash:', actualTxHash);
+      }
+    } catch (error) {
+      console.log('❌ Could not get bundle status:', error.message);
+      console.log('❌ Bundle status error object:', error);
+    }
+    
+    // Если не удалось получить реальный хеш, используем bundle ID
+    const finalTxHash = actualTxHash || bundleId;
+    console.log('Final hash to use:', finalTxHash);
 
     return {
       success: true,
-      transactionHash: res,
+      transactionHash: String(finalTxHash || ''),
+      bundleId: String(bundleId || ''),
+      actualTransactionHash: String(actualTxHash || ''),
       network: networkName,
       orderId,
       calls: [

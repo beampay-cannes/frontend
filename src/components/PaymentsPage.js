@@ -145,7 +145,7 @@ const PaymentsPage = () => {
                   Total Revenue
                 </Typography>
                 <Typography variant="h4" component="div" color="success.main">
-                  ₽{totalRevenue.toLocaleString()}
+                  ₽{String(totalRevenue || 0).toLocaleString()}
                 </Typography>
                 <TrendingUpIcon sx={{ fontSize: 40, color: 'success.main' }} />
               </CardContent>
@@ -159,7 +159,7 @@ const PaymentsPage = () => {
                   Total Payments
                 </Typography>
                 <Typography variant="h4" component="div">
-                  {payments.length}
+                  {String(payments.length || 0)}
                 </Typography>
                 <PaymentIcon sx={{ fontSize: 40, color: 'primary.main' }} />
               </CardContent>
@@ -173,7 +173,7 @@ const PaymentsPage = () => {
                   Successful Payments
                 </Typography>
                 <Typography variant="h4" component="div" color="success.main">
-                  {completedPayments}
+                  {String(completedPayments || 0)}
                 </Typography>
                 <PaymentIcon sx={{ fontSize: 40, color: 'success.main' }} />
               </CardContent>
@@ -200,11 +200,11 @@ const PaymentsPage = () => {
                     <TableCell>
                       {new Date(payment.createdAt).toLocaleDateString('en-US')}
                     </TableCell>
-                    <TableCell>{payment.productTitle}</TableCell>
-                    <TableCell>{payment.customerName}</TableCell>
-                    <TableCell>{payment.customerEmail}</TableCell>
+                    <TableCell>{String(payment.productTitle || '')}</TableCell>
+                    <TableCell>{String(payment.customerName || '')}</TableCell>
+                    <TableCell>{String(payment.customerEmail || '')}</TableCell>
                     <TableCell align="right">
-                      ₽{payment.amount.toLocaleString()}
+                      ₽{String(payment.amount || '0').toLocaleString()}
                     </TableCell>
                     <TableCell>
                       <Typography

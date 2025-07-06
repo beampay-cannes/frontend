@@ -52,6 +52,7 @@ const ProductPage = () => {
           name,
           address,
           quantity,
+          amount: product.price * quantity, // Добавляем сумму заказа
           wallet: sellerWallet,
           sellerChainId: sellerChainId
         })
@@ -99,9 +100,9 @@ const ProductPage = () => {
             </Grid>
             <Grid item xs={12} md={6} sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
               <CardContent sx={{ width: '100%' }}>
-                <Typography variant="h4" gutterBottom sx={{ fontWeight: 700, color: '#fff' }}>{product.title}</Typography>
-                <Typography variant="body1" color="text.secondary" sx={{ mb: 3, textAlign: 'left' }}>{product.description}</Typography>
-                <Typography variant="h5" sx={{ mb: 3, color: '#7C4DFF', fontWeight: 700, textShadow: '0 0 8px #7C4DFF55' }}>₽{product.price}</Typography>
+                <Typography variant="h4" gutterBottom sx={{ fontWeight: 700, color: '#fff' }}>{String(product.title || '')}</Typography>
+                <Typography variant="body1" color="text.secondary" sx={{ mb: 3, textAlign: 'left' }}>{String(product.description || '')}</Typography>
+                <Typography variant="h5" sx={{ mb: 3, color: '#7C4DFF', fontWeight: 700, textShadow: '0 0 8px #7C4DFF55' }}>{String(product.price || '')} USDC</Typography>
                 <Box sx={{ mb: 2 }}>
                   <TextField
                     label="Your name"
@@ -126,7 +127,7 @@ const ProductPage = () => {
                     >
                       <RemoveIcon />
                     </Button>
-                    <Typography variant="h6" sx={{ mx: 2, minWidth: 32, textAlign: 'center' }}>{quantity}</Typography>
+                    <Typography variant="h6" sx={{ mx: 2, minWidth: 32, textAlign: 'center' }}>{String(quantity || 1)}</Typography>
                     <Button
                       variant="outlined"
                       color="primary"

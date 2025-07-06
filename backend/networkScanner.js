@@ -45,7 +45,7 @@ function saveLastSyncedBlock(blocks) {
 }
 
 // Получение событий из ноды для конкретной сети
-async function getEventsFromNode(provider, contractAddress, eventTopic, fromBlock, toBlock) {
+async function getEventsFromNode(provider, contractAddress, eventTopic, fromBlock, toBlock, eventType = 'payment') {
   try {
     const logs = await provider.getLogs({
       address: contractAddress,
@@ -54,24 +54,35 @@ async function getEventsFromNode(provider, contractAddress, eventTopic, fromBloc
       topics: [eventTopic]
     });
     
-    // Парсим события ConfirmedPayment(address indexed to, uint256 indexed amount, string paymentId)
     const events = [];
     for (const log of logs) {
       try {
-        // Декодируем данные события
-        const iface = new ethers.Interface([
-          'event ConfirmedPayment(address indexed to, uint256 indexed amount, string paymentId)'
-        ]);
-        const decoded = iface.parseLog(log);
-        
-        // Извлекаем paymentId из события
-        const paymentId = decoded.args.paymentId;
-        console.log(`Found ConfirmedPayment event: to=${decoded.args.to}, amount=${decoded.args.amount}, paymentId=${paymentId}`);
-        
-        // Извлекаем order ID из paymentId (формат: "order_123")
-        if (paymentId.startsWith('order_')) {
-          const orderId = paymentId.replace('order_', '');
-          events.push(orderId);
+        if (eventType === 'mint') {
+          // Обработка mint событий для Base TokenMessenger
+          console.log(`Found Mint event: txHash=${log.transactionHash}, data=${log.data}`);
+          
+          // Извлекаем order ID из конца hex данных
+          const orderId = extractOrderIdFromMintEvent(log.data);
+          if (orderId) {
+            console.log(`Extracted order ID from mint event: ${orderId}`);
+            events.push(orderId);
+          }
+        } else {
+          // Обработка ConfirmedPayment событий для других сетей
+          const iface = new ethers.Interface([
+            'event ConfirmedPayment(address indexed to, uint256 indexed amount, string paymentId)'
+          ]);
+          const decoded = iface.parseLog(log);
+          
+          // Извлекаем paymentId из события
+          const paymentId = decoded.args.paymentId;
+          console.log(`Found ConfirmedPayment event: to=${decoded.args.to}, amount=${decoded.args.amount}, paymentId=${paymentId}`);
+          
+          // Извлекаем order ID из paymentId (формат: "order_123")
+          if (paymentId.startsWith('order_')) {
+            const orderId = paymentId.replace('order_', '');
+            events.push(orderId);
+          }
         }
       } catch (decodeError) {
         console.error('Error decoding event:', decodeError);
@@ -85,8 +96,54 @@ async function getEventsFromNode(provider, contractAddress, eventTopic, fromBloc
   }
 }
 
+// Функция для извлечения order ID из mint события
+function extractOrderIdFromMintEvent(hexData) {
+  try {
+    // Убираем префикс 0x
+    const cleanHex = hexData.startsWith('0x') ? hexData.slice(2) : hexData;
+    
+    // Ищем pattern "order_" в конце данных
+    // "order_" в hex: 6f726465725f
+    const orderPrefix = '6f726465725f';
+    const orderIndex = cleanHex.lastIndexOf(orderPrefix);
+    
+    if (orderIndex === -1) {
+      console.log('Order prefix not found in mint event data');
+      return null;
+    }
+    
+    // Извлекаем данные после "order_"
+    const afterPrefix = cleanHex.slice(orderIndex + orderPrefix.length);
+    
+    // Убираем trailing zeros и конвертируем в строку
+    const cleanAfterPrefix = afterPrefix.replace(/0+$/, '');
+    
+    // Конвертируем hex в строку
+    let orderIdString = '';
+    for (let i = 0; i < cleanAfterPrefix.length; i += 2) {
+      const hexChar = cleanAfterPrefix.substr(i, 2);
+      const charCode = parseInt(hexChar, 16);
+      if (charCode > 0) {
+        orderIdString += String.fromCharCode(charCode);
+      }
+    }
+    
+    console.log(`🔍 Mint event parsing:`)
+    console.log(`- Original hex: ${hexData}`)
+    console.log(`- Order prefix found at index: ${orderIndex}`)
+    console.log(`- After prefix: ${afterPrefix}`)
+    console.log(`- Clean after prefix: ${cleanAfterPrefix}`)
+    console.log(`- Order ID: ${orderIdString}`)
+    
+    return orderIdString;
+  } catch (error) {
+    console.error('Error extracting order ID from mint event:', error);
+    return null;
+  }
+}
+
 // Обновление заказов через ноду для конкретной сети (on-the-fly режим)
-async function updateOrdersFromNodeOnTheFly(provider, contractAddress, eventTopic, networkName, lastSyncedBlock) {
+async function updateOrdersFromNodeOnTheFly(provider, contractAddress, eventTopic, networkName, lastSyncedBlock, eventType = 'payment') {
   try {
     if (lastSyncedBlock === null) {
       console.log(`No last synced block found for ${networkName}, skipping...`);
@@ -106,7 +163,7 @@ async function updateOrdersFromNodeOnTheFly(provider, contractAddress, eventTopi
     if (fromBlock <= toBlock) {
       const blocksProcessed = toBlock - fromBlock + 1;
       console.log(`Scanning recent blocks on ${networkName}: ${fromBlock} to ${toBlock} (${blocksProcessed} blocks, on-the-fly mode)`);
-      const paidOrderIds = await getEventsFromNode(provider, contractAddress, eventTopic, fromBlock, toBlock);
+      const paidOrderIds = await getEventsFromNode(provider, contractAddress, eventTopic, fromBlock, toBlock, eventType);
       if (paidOrderIds.length > 0) {
         console.log(`Found ${paidOrderIds.length} new paid orders on ${networkName}:`, paidOrderIds);
         const ordersData = fs.readFileSync(ORDERS_PATH, 'utf8');
@@ -137,7 +194,7 @@ async function updateOrdersFromNodeOnTheFly(provider, contractAddress, eventTopi
 }
 
 // Обновление заказов через ноду для конкретной сети (старая функция, оставлена для совместимости)
-async function updateOrdersFromNode(provider, contractAddress, eventTopic, networkName, lastSyncedBlock) {
+async function updateOrdersFromNode(provider, contractAddress, eventTopic, networkName, lastSyncedBlock, eventType = 'payment') {
   try {
     if (lastSyncedBlock === null) {
       console.log(`No last synced block found for ${networkName}, skipping...`);
@@ -150,7 +207,7 @@ async function updateOrdersFromNode(provider, contractAddress, eventTopic, netwo
     }
     const blocksProcessed = latestBlock - lastSyncedBlock;
     console.log(`Fetching events from ${networkName} block ${lastSyncedBlock + 1} to ${latestBlock} (${blocksProcessed} blocks)`);
-    const paidOrderIds = await getEventsFromNode(provider, contractAddress, eventTopic, lastSyncedBlock + 1, latestBlock);
+    const paidOrderIds = await getEventsFromNode(provider, contractAddress, eventTopic, lastSyncedBlock + 1, latestBlock, eventType);
     if (paidOrderIds.length > 0) {
       console.log(`Found ${paidOrderIds.length} new paid orders on ${networkName}:`, paidOrderIds);
       const ordersData = fs.readFileSync(ORDERS_PATH, 'utf8');
@@ -206,12 +263,16 @@ async function updateOrders() {
   const newBlocks = {};
   for (const chain of enabledChains) {
     const provider = new ethers.JsonRpcProvider(chain.rpc);
+    const eventType = chain.eventType || 'payment';
+    console.log(`🔍 Scanning ${chain.name} network: contract=${chain.contract}, eventType=${eventType}, topic=${chain.eventTopic}`);
+    
     const newBlock = await updateOrdersFromNodeOnTheFly(
       provider,
       chain.contract,
       chain.eventTopic,
       chain.name,
-      lastSyncedBlocks[chain.name]
+      lastSyncedBlocks[chain.name],
+      eventType
     );
     newBlocks[chain.name] = newBlock;
   }

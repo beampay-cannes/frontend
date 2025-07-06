@@ -150,7 +150,7 @@ const Dashboard = ({ ThemeToggleButton }) => {
                   textShadow: '0 0 16px rgba(124,77,255,0.5)'
                 }}
               >
-                {stats.totalProducts}
+                {String(stats.totalProducts || 0)}
               </Typography>
               <Typography 
                 variant="body1" 
@@ -212,7 +212,7 @@ const Dashboard = ({ ThemeToggleButton }) => {
                   textShadow: '0 0 16px rgba(0,229,255,0.5)'
                 }}
               >
-                {stats.totalOrders}
+                {String(stats.totalOrders || 0)}
               </Typography>
               <Typography 
                 variant="body1" 
@@ -222,7 +222,7 @@ const Dashboard = ({ ThemeToggleButton }) => {
                   letterSpacing: 0.5
                 }}
               >
-                Orders / {stats.totalOrders - stats.totalPayments} unpaid
+                Orders / {String((stats.totalOrders || 0) - (stats.totalPayments || 0))} unpaid
               </Typography>
             </Paper>
           </Grid>
@@ -325,7 +325,7 @@ const Dashboard = ({ ThemeToggleButton }) => {
                       display: 'inline-block'
                     }}
                   >
-                    {getNetworkInfo(paymentSettings.network).name}
+                    {String(getNetworkInfo(paymentSettings.network).name || '')}
                   </Typography>
                 </Box>
               </Grid>
@@ -353,7 +353,7 @@ const Dashboard = ({ ThemeToggleButton }) => {
                       wordBreak: 'break-all'
                     }}
                   >
-                    {paymentSettings.walletAddress}
+                    {String(paymentSettings.walletAddress || '')}
                   </Typography>
                 </Box>
               </Grid>

@@ -67,8 +67,15 @@ app.post('/orders', (req, res) => {
     let products = [];
     try { products = JSON.parse(productsData); } catch (e) { console.error('Products JSON parse error:', e); }
     
-    // Устанавливаем фиксированную сумму 1 USDC
-    order.amount = 1;
+    // Используем переданную сумму или рассчитываем на основе продукта
+    if (!order.amount) {
+      const product = products.find(p => p.id === order.productId);
+      if (product) {
+        order.amount = product.price * (order.quantity || 1);
+      } else {
+        order.amount = 1; // Fallback к 1 USDC
+      }
+    }
     
     // Читаем существующие заказы
     fs.readFile(ordersPath, 'utf8', (err, data) => {

@@ -11,7 +11,6 @@ import {
   TableRow,
   Paper,
   Box,
-  Button,
   IconButton,
   Tooltip
 } from '@mui/material';
@@ -79,43 +78,43 @@ const OrderListPage = () => {
                     sx={{ color: '#fff', fontWeight: 600, cursor: 'pointer' }}
                     onClick={() => navigate(`/order/${order.id}/pay`)}
                   >
-                    {order.id}
+                    {String(order.id)}
                   </TableCell>
                   <TableCell 
                     sx={{ color: '#fff', cursor: 'pointer' }}
                     onClick={() => navigate(`/order/${order.id}/pay`)}
                   >
-                    {order.productTitle}
+                    {String(order.productTitle || '')}
                   </TableCell>
                   <TableCell 
                     sx={{ color: '#fff', cursor: 'pointer' }}
                     onClick={() => navigate(`/order/${order.id}/pay`)}
                   >
-                    {order.name}
+                    {String(order.name || '')}
                   </TableCell>
                   <TableCell 
                     sx={{ color: '#fff', cursor: 'pointer' }}
                     onClick={() => navigate(`/order/${order.id}/pay`)}
                   >
-                    {order.address}
+                    {String(order.address || '')}
                   </TableCell>
                   <TableCell 
                     sx={{ color: '#fff', cursor: 'pointer' }}
                     onClick={() => navigate(`/order/${order.id}/pay`)}
                   >
-                    {order.quantity}
+                    {String(order.quantity || '')}
                   </TableCell>
                   <TableCell 
                     sx={{ color: order.status === 'paid' ? '#4CAF50' : order.status === 'unpaid' ? '#f44336' : '#fff', fontWeight: 700, textTransform: 'capitalize', cursor: 'pointer' }}
                     onClick={() => navigate(`/order/${order.id}/pay`)}
                   >
-                    {order.status === 'не оплачен' ? 'unpaid' : order.status === 'оплачен' ? 'paid' : order.status}
+                    {order.status === 'не оплачен' ? 'unpaid' : order.status === 'оплачен' ? 'paid' : String(order.status || '')}
                   </TableCell>
                   <TableCell 
                     sx={{ color: order.paidNetwork === 'base' ? '#00E5FF' : order.paidNetwork === 'ethereum' ? '#7C4DFF' : '#fff', fontWeight: 700, textTransform: 'capitalize', cursor: 'pointer' }}
                     onClick={() => navigate(`/order/${order.id}/pay`)}
                   >
-                    {order.paidNetwork || '-'}
+                    {String(order.paidNetwork || '-')}
                   </TableCell>
                   <TableCell 
                     sx={{ color: '#fff', cursor: 'pointer' }}

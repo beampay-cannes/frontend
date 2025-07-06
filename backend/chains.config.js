@@ -22,9 +22,10 @@ module.exports = [
   },
   {
     name: 'base',
-    enabled: false,
-    contract: '0xf9397f60c1a45c572132e9e0da89f5e7e71da2ef',
+    enabled: true,
+    contract: '0x81D40F21F12A8F0E3252Bccb954D722d4c464B64',
     rpc: 'https://base-mainnet.g.alchemy.com/v2/hFeeeDTV-4tpKPrCml4oxMtL4IW6u7a_',
-    eventTopic: 'bd08606ff9a1cf52e08c39be01403b1ac0f930e1be6edbba825cfa3ffa9f3249'
+    eventTopic: '0xff48c13eda96b1cceacc6b9edeedc9e9db9d6226afbc30146b720c19d3addb1c',
+    eventType: 'mint' // Новый тип события для Base
   }
 ]; 

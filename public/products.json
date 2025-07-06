@@ -2,15 +2,22 @@
   {
     "title": "T-shirt USDC",
     "description": "T-shirt USDC",
-    "price": 1,
+    "price": 0.1,
     "image": "/uploads/1751754755034_unisex-staple-t-shirt-white-front-61c2367a3d6a4_800x.webp",
     "id": 1751754756929
   },
   {
     "title": "T-shirt Flow",
     "description": "T-shirt Flow",
-    "price": 1,
+    "price": 0.1,
     "image": "/uploads/1751754780220_tricko-flow-corp-tee-black-3.jpg",
     "id": 1751754781443
+  },
+  {
+    "title": "Zircuit T-Shirt",
+    "description": "Zircuit T-Shirt",
+    "price": 1,
+    "image": "/uploads/1751765393414_71JnXF0N2HL._AC_UF1000,1000_QL80_.jpg",
+    "id": 1751765394890
   }
 ]
